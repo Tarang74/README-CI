@@ -1,4 +1,4 @@
-import { error, getInput, info, setFailed, warning } from '@actions/core';
+import { getInput, info, setFailed, warning } from '@actions/core';
 import { context, getOctokit } from '@actions/github';
 
 // Template placeholders for README
@@ -21,7 +21,7 @@ async function run() {
     const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
     const levelMacro = getInput('LEVEL_MACRO', { required: true });
 
-    info(context as any as string);
+    info(JSON.stringify(context, null, 4));
 
     let LectureNotesContents = '';
     let ExamNotesContents = '';
