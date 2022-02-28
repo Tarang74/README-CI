@@ -9,6 +9,7 @@ inputs:
 
 runs:
   using: "node16"
+  run: "npm install"
   main: "dist/index.js"
 
 branding:
