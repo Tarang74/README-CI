@@ -8580,7 +8580,7 @@ function parseLectureNotesContents(s, levelMacro) {
             copyrightVersion = v.slice(9).split('}')[0];
         }
         else if (v.startsWith(`\\${levelMacro}{`)) {
-            sections.push(v.slice(levelMacro.length + 1).split('}')[0]);
+            sections.push(v.slice(levelMacro.length + 2).split('}')[0]);
         }
     });
     if (copyrightModifier != '' && copyrightVersion != '') {
