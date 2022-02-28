@@ -88,8 +88,8 @@ async function run() {
         .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
                 let buffer = Buffer.from(
-                    (onfulfilled as any).contents,
-                    (onfulfilled as any).encoding
+                    (onfulfilled.data as any).contents,
+                    (onfulfilled.data as any).encoding
                 );
                 CodeOwnersContents = buffer.toString();
             } else {
