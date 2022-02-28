@@ -1,0 +1,16 @@
+name: "README CI"
+description: "README Continuous Integration for LaTeX QUT Notes."
+author: "Tarang Janawalkar"
+
+inputs:
+  GITHUB_TOKEN:
+    description: "GitHub token"
+    required: true
+
+runs:
+  using: "node16"
+  main: "dist/index.js"
+
+branding:
+  icon: align-left
+  color: gray-dark
