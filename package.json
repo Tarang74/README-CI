@@ -1,11 +1,11 @@
 {
     "name": "readme-ci",
-    "version": "1.0.0",
+    "version": "1.0.5",
     "type": "commonjs",
     "description": "README Continuous Integration for LaTeX QUT Notes.",
     "main": "dist/index.js",
     "scripts": {
-        "build": "tsc && ncc build",
+        "build": "ncc build src/index.ts",
         "test": "jest"
     },
     "author": "Tarang Janawalkar",

@@ -37,20 +37,18 @@ async function run() {
             ref: context.sha,
         })
         .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(
-                    (onfulfilled.data as any).content,
-                    (onfulfilled.data as any).encoding
-                );
-                LectureNotesContents = buffer.toString();
-            } else {
-                LN = false;
-                warning(
-                    `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
-                        context.payload.repository!.name
-                    } Lecture Notes.tex\``
-                );
-            }
+            let buffer = Buffer.from(
+                (onfulfilled.data as any).content,
+                (onfulfilled.data as any).encoding
+            );
+            LectureNotesContents = buffer.toString();
+        }).catch((onrejected) => {
+            LN = false;
+            warning(
+                `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
+                    context.payload.repository!.name
+                } Lecture Notes.tex\``
+            );
         });
 
     await client
@@ -61,20 +59,18 @@ async function run() {
             ref: context.sha,
         })
         .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(
-                    (onfulfilled.data as any).content,
-                    (onfulfilled.data as any).encoding
-                );
-                ExamNotesContents = buffer.toString();
-            } else {
-                EN = false;
-                warning(
-                    `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
-                        context.payload.repository!.name
-                    } Exam Notes.tex\``
-                );
-            }
+            let buffer = Buffer.from(
+                (onfulfilled.data as any).content,
+                (onfulfilled.data as any).encoding
+            );
+            ExamNotesContents = buffer.toString();
+        }).catch((onrejected) => {
+            EN = false;
+            warning(
+                `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
+                    context.payload.repository!.name
+                } Exam Notes.tex\``
+            );
         });
 
     // Try to get CODEOWNERS file
@@ -96,8 +92,6 @@ async function run() {
                 CO = false;
             }
         });
-
-    info('Successfully fetched all required files.');
 
     if (!CO) return error(`No CODEOWNERS file was provided in repository.`);
 
@@ -139,8 +133,6 @@ ${CONTENTS}---
 
 ${COPYRIGHT}`;
 
-    info('Before putting README.md.');
-
     // Output to README.md
     await client
         .request('PUT /repos/{owner}/{repo}/contents/{path}', {
@@ -156,6 +148,8 @@ ${COPYRIGHT}`;
             } else if (onfulfilled.status == 201) {
                 return info('Successfully created README.md.');
             }
+        }).catch((onrejected) => {
+            return error(onrejected);
         });
 }
 

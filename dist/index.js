@@ -8299,127 +8299,7 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 2877:
-/***/ ((module) => {
-
-module.exports = eval("require")("encoding");
-
-
-/***/ }),
-
-/***/ 9491:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("assert");
-
-/***/ }),
-
-/***/ 2361:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("events");
-
-/***/ }),
-
-/***/ 7147:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("fs");
-
-/***/ }),
-
-/***/ 3685:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("http");
-
-/***/ }),
-
-/***/ 5687:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("https");
-
-/***/ }),
-
-/***/ 1808:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("net");
-
-/***/ }),
-
-/***/ 2037:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("os");
-
-/***/ }),
-
-/***/ 1017:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("path");
-
-/***/ }),
-
-/***/ 5477:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("punycode");
-
-/***/ }),
-
-/***/ 2781:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("stream");
-
-/***/ }),
-
-/***/ 4404:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("tls");
-
-/***/ }),
-
-/***/ 7310:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("url");
-
-/***/ }),
-
-/***/ 3837:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("util");
-
-/***/ }),
-
-/***/ 9796:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("zlib");
-
-/***/ }),
-
-/***/ 9723:
+/***/ 6144:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -8466,14 +8346,11 @@ function run() {
             ref: github_1.context.sha,
         })
             .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
-                LectureNotesContents = buffer.toString();
-            }
-            else {
-                LN = false;
-                (0, core_1.warning)(`No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Lecture Notes.tex\``);
-            }
+            let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
+            LectureNotesContents = buffer.toString();
+        }).catch((onrejected) => {
+            LN = false;
+            (0, core_1.warning)(`No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Lecture Notes.tex\``);
         });
         yield client
             .request('GET /repos/{owner}/{repo}/contents/{path}', {
@@ -8483,14 +8360,11 @@ function run() {
             ref: github_1.context.sha,
         })
             .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
-                ExamNotesContents = buffer.toString();
-            }
-            else {
-                EN = false;
-                (0, core_1.warning)(`No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Exam Notes.tex\``);
-            }
+            let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
+            ExamNotesContents = buffer.toString();
+        }).catch((onrejected) => {
+            EN = false;
+            (0, core_1.warning)(`No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Exam Notes.tex\``);
         });
         // Try to get CODEOWNERS file
         yield client
@@ -8509,7 +8383,6 @@ function run() {
                 CO = false;
             }
         });
-        (0, core_1.info)('Successfully fetched all required files.');
         if (!CO)
             return (0, core_1.error)(`No CODEOWNERS file was provided in repository.`);
         if (!LN && !EN) {
@@ -8547,7 +8420,6 @@ This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
 ${CONTENTS}---
 
 ${COPYRIGHT}`;
-        (0, core_1.info)('Before putting README.md.');
         // Output to README.md
         yield client
             .request('PUT /repos/{owner}/{repo}/contents/{path}', {
@@ -8564,6 +8436,8 @@ ${COPYRIGHT}`;
             else if (onfulfilled.status == 201) {
                 return (0, core_1.info)('Successfully created README.md.');
             }
+        }).catch((onrejected) => {
+            return (0, core_1.error)(onrejected);
         });
     });
 }
@@ -8755,6 +8629,126 @@ run();
 
 /***/ }),
 
+/***/ 2877:
+/***/ ((module) => {
+
+module.exports = eval("require")("encoding");
+
+
+/***/ }),
+
+/***/ 9491:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("assert");
+
+/***/ }),
+
+/***/ 2361:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("events");
+
+/***/ }),
+
+/***/ 7147:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs");
+
+/***/ }),
+
+/***/ 3685:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("http");
+
+/***/ }),
+
+/***/ 5687:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("https");
+
+/***/ }),
+
+/***/ 1808:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("net");
+
+/***/ }),
+
+/***/ 2037:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("os");
+
+/***/ }),
+
+/***/ 1017:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("path");
+
+/***/ }),
+
+/***/ 5477:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("punycode");
+
+/***/ }),
+
+/***/ 2781:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("stream");
+
+/***/ }),
+
+/***/ 4404:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("tls");
+
+/***/ }),
+
+/***/ 7310:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("url");
+
+/***/ }),
+
+/***/ 3837:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("util");
+
+/***/ }),
+
+/***/ 9796:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("zlib");
+
+/***/ }),
+
 /***/ 1907:
 /***/ ((module) => {
 
@@ -8805,7 +8799,7 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(9723);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(6144);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()
