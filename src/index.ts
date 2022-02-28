@@ -378,7 +378,7 @@ function setCopyrightInformation(
             modifierText = 'Attribution-ShareAlike';
     }
 
-    return `\n---\n\n![Copyright](${iconURL})\n\nThis work is licensed under a [${modifierText} ${versionText} License](${licenseURL}).`;
+    return `---\n\n![Copyright](${iconURL})\n\nThis work is licensed under a [${modifierText} ${versionText} License](${licenseURL}).\r\n`;
 }
 
 run();
