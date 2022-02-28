@@ -8337,7 +8337,6 @@ function run() {
         let CodeOwnersContents = '';
         let LN = true;
         let EN = true;
-        let CO = true;
         // Look for lecture notes/exam notes files
         yield client
             .request('GET /repos/{owner}/{repo}/contents/{path}', {
@@ -8386,12 +8385,9 @@ function run() {
                 let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
                 CodeOwnersContents = buffer.toString();
             }
-            else {
-                CO = false;
-            }
-        });
-        if (!CO)
+        }).catch((onrejected) => {
             return (0, core_1.error)(`No CODEOWNERS file was provided in repository.`);
+        });
         if (!LN && !EN) {
             return (0, core_1.error)('No source files were found, ending workflow.');
         }

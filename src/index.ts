@@ -27,7 +27,6 @@ async function run() {
 
     let LN = true;
     let EN = true;
-    let CO = true;
 
     // Look for lecture notes/exam notes files
     await client
@@ -95,12 +94,11 @@ async function run() {
                     (onfulfilled.data as any).encoding
                 );
                 CodeOwnersContents = buffer.toString();
-            } else {
-                CO = false;
             }
+        }).catch((onrejected) => {
+            return error(`No CODEOWNERS file was provided in repository.`);
         });
 
-    if (!CO) return error(`No CODEOWNERS file was provided in repository.`);
 
     if (!LN && !EN) {
         return error('No source files were found, ending workflow.');
