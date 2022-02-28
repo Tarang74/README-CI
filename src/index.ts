@@ -208,19 +208,19 @@ function parseCODEOWNERS(s: string) {
 
         usernamesArray.forEach((u, i) => {
             if (i == usernamesArray.length - 1) {
-                usernamesText += `and ${u}(https://github.com/${u})`;
+                usernamesText += `and [${u}](https://github.com/${u})`;
             } else {
                 if (usernamesArray.length == 2) {
-                    usernamesText += `${u}(https://github.com/${u}) `;
+                    usernamesText += `[${u}](https://github.com/${u}) `;
                 } else {
-                    usernamesText += `${u}(https://github.com/${u}), `;
+                    usernamesText += `[${u}](https://github.com/${u}), `;
                 }
             }
         });
 
         CONTRIBUTORS = `Thanks to ${usernamesText} for the collaboration.\n\n`;
     } else if (usernames.length == 1) {
-        CONTRIBUTORS = `Thanks to ${usernamesArray[0]}(https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
+        CONTRIBUTORS = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
     } else {
         CONTRIBUTORS = '';
     }
