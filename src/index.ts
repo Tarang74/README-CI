@@ -21,8 +21,6 @@ async function run() {
     const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
     const levelMacro = getInput('LEVEL_MACRO', { required: true });
 
-    info(JSON.stringify(context, null, 4));
-
     let LectureNotesContents = '';
     let ExamNotesContents = '';
     let CodeOwnersContents = '';
@@ -33,7 +31,7 @@ async function run() {
     // Look for lecture notes/exam notes files
     await client
         .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: context.actor,
+            owner: context.payload.repository!.owner.name!,
             repo: context.payload.repository!.name,
             path: `${context.payload.repository!.name} Lecture Notes.tex`,
             ref: context.sha
@@ -58,7 +56,7 @@ async function run() {
 
     await client
         .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: context.actor,
+            owner: context.payload.repository!.owner.name!,
             repo: context.payload.repository!.name,
             path: `${context.payload.repository!.name} Exam Notes.tex`,
             ref: context.sha
@@ -84,7 +82,7 @@ async function run() {
     // Try to get CODEOWNERS file
     await client
         .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: context.actor,
+            owner: context.payload.repository!.owner.name!,
             repo: context.payload.repository!.name,
             path: 'CODEOWNERS',
             ref: context.sha
@@ -111,7 +109,7 @@ async function run() {
     UNIT_CODE = context.payload.repository!.name;
 
     // CONTRIBUTORS
-    parseCODEOWNERS(CodeOwnersContents, context.actor);
+    parseCODEOWNERS(CodeOwnersContents);
 
     // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
     if (LN && EN) {
@@ -142,16 +140,16 @@ ${CONTENTS}${COPYRIGHT}`;
 
     // Check if file exists
     let requestOptions = {
-        owner: context.actor,
+        owner: context.payload.repository!.owner.name!,
         repo: context.payload.repository!.name,
         path: 'README.md',
-        message: 'Automated README CI.',
+        message: 'README CI.',
         content: Buffer.from(output).toString('base64')
     };
 
     await client
         .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: context.actor,
+            owner: context.payload.repository!.owner.name!,
             repo: context.payload.repository!.name,
             path: 'README.md',
             ref: context.sha
@@ -177,11 +175,11 @@ ${CONTENTS}${COPYRIGHT}`;
         });
 }
 
-function parseCODEOWNERS(s: string, owner: string) {
+function parseCODEOWNERS(s: string) {
     const lines = s.split(/\r?\n/);
-    let usernames = new Set<string>([]);
+    let usernames:Array<string> = [''];
 
-    lines.forEach((v) => {
+    lines.forEach((v, i) => {
         v = v.trim();
 
         // Skip if comment
@@ -197,12 +195,13 @@ function parseCODEOWNERS(s: string, owner: string) {
         if (temp_usernames == null) return;
 
         temp_usernames.forEach((u) => {
-            usernames.add(u.slice(1));
+            usernames.push(u.slice(1));
         });
     });
 
-    usernames.delete(owner);
-    const usernamesArray = [...usernames];
+    const usernamesSet = new Set(usernames);
+    let usernamesArray = [...usernamesSet];
+    usernamesArray = usernamesArray.slice(1);
 
     if (usernamesArray.length > 1) {
         let usernamesText = '';
@@ -220,7 +219,7 @@ function parseCODEOWNERS(s: string, owner: string) {
         });
 
         CONTRIBUTORS = `Thanks to ${usernamesText} for the collaboration.\n\n`;
-    } else if (usernames.size == 1) {
+    } else if (usernames.length == 1) {
         CONTRIBUTORS = `Thanks to ${usernamesArray[0]}(https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
     } else {
         CONTRIBUTORS = '';

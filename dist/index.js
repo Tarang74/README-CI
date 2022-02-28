@@ -8332,7 +8332,6 @@ function run() {
         // Get client and context
         const client = (0, github_1.getOctokit)((0, core_1.getInput)('GITHUB_TOKEN', { required: true }));
         const levelMacro = (0, core_1.getInput)('LEVEL_MACRO', { required: true });
-        (0, core_1.info)(JSON.stringify(github_1.context, null, 4));
         let LectureNotesContents = '';
         let ExamNotesContents = '';
         let CodeOwnersContents = '';
@@ -8341,7 +8340,7 @@ function run() {
         // Look for lecture notes/exam notes files
         yield client
             .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.actor,
+            owner: github_1.context.payload.repository.owner.name,
             repo: github_1.context.payload.repository.name,
             path: `${github_1.context.payload.repository.name} Lecture Notes.tex`,
             ref: github_1.context.sha
@@ -8358,7 +8357,7 @@ function run() {
         });
         yield client
             .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.actor,
+            owner: github_1.context.payload.repository.owner.name,
             repo: github_1.context.payload.repository.name,
             path: `${github_1.context.payload.repository.name} Exam Notes.tex`,
             ref: github_1.context.sha
@@ -8376,7 +8375,7 @@ function run() {
         // Try to get CODEOWNERS file
         yield client
             .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.actor,
+            owner: github_1.context.payload.repository.owner.name,
             repo: github_1.context.payload.repository.name,
             path: 'CODEOWNERS',
             ref: github_1.context.sha
@@ -8396,7 +8395,7 @@ function run() {
         // UNIT_CODE
         UNIT_CODE = github_1.context.payload.repository.name;
         // CONTRIBUTORS
-        parseCODEOWNERS(CodeOwnersContents, github_1.context.actor);
+        parseCODEOWNERS(CodeOwnersContents);
         // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
         if (LN && EN) {
             WHICH_NOTES = '**lecture notes** and **exam notes**';
@@ -8425,15 +8424,15 @@ ${CONTENTS}${COPYRIGHT}`;
         // Output to README.md
         // Check if file exists
         let requestOptions = {
-            owner: github_1.context.actor,
+            owner: github_1.context.payload.repository.owner.name,
             repo: github_1.context.payload.repository.name,
             path: 'README.md',
-            message: 'Automated README CI.',
+            message: 'README CI.',
             content: Buffer.from(output).toString('base64')
         };
         yield client
             .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.actor,
+            owner: github_1.context.payload.repository.owner.name,
             repo: github_1.context.payload.repository.name,
             path: 'README.md',
             ref: github_1.context.sha
@@ -8459,10 +8458,10 @@ ${CONTENTS}${COPYRIGHT}`;
         });
     });
 }
-function parseCODEOWNERS(s, owner) {
+function parseCODEOWNERS(s) {
     const lines = s.split(/\r?\n/);
-    let usernames = new Set([]);
-    lines.forEach((v) => {
+    let usernames = [''];
+    lines.forEach((v, i) => {
         v = v.trim();
         // Skip if comment
         if (v.startsWith('%')) {
@@ -8473,11 +8472,12 @@ function parseCODEOWNERS(s, owner) {
         if (temp_usernames == null)
             return;
         temp_usernames.forEach((u) => {
-            usernames.add(u.slice(1));
+            usernames.push(u.slice(1));
         });
     });
-    usernames.delete(owner);
-    const usernamesArray = [...usernames];
+    const usernamesSet = new Set(usernames);
+    let usernamesArray = [...usernamesSet];
+    usernamesArray = usernamesArray.slice(1);
     if (usernamesArray.length > 1) {
         let usernamesText = '';
         usernamesArray.forEach((u, i) => {
@@ -8495,7 +8495,7 @@ function parseCODEOWNERS(s, owner) {
         });
         CONTRIBUTORS = `Thanks to ${usernamesText} for the collaboration.\n\n`;
     }
-    else if (usernames.size == 1) {
+    else if (usernames.length == 1) {
         CONTRIBUTORS = `Thanks to ${usernamesArray[0]}(https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
     }
     else {
