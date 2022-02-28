@@ -133,9 +133,7 @@ ${CONTRIBUTORS}---
 
 This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
 
-${CONTENTS}---
-
-${COPYRIGHT}`;
+${CONTENTS}${COPYRIGHT}`;
 
     // Output to README.md
     await client
