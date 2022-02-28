@@ -160,7 +160,7 @@ ${CONTENTS}${COPYRIGHT}`;
                 requestOptions['sha'] = (onfulfilled.data as any).sha;
             }
         })
-        .catch();
+        .catch(() => {});
 
     await client
         .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)

@@ -8445,7 +8445,7 @@ ${CONTENTS}${COPYRIGHT}`;
                 requestOptions['sha'] = onfulfilled.data.sha;
             }
         })
-            .catch();
+            .catch(() => { });
         yield client
             .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
             .then((onfulfilled) => {
