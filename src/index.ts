@@ -18,6 +18,8 @@ let COPYRIGHT = '';
 
 async function run() {
     try {
+        info("Run function executed.");
+
         // Get client and context
         const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
 
@@ -155,6 +157,7 @@ ${COPYRIGHT}`;
                 }
             });
     } catch (error: any) {
+        info("Error code (0).")
         return setFailed(error.message);
     }
 }

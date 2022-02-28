@@ -8450,6 +8450,7 @@ let COPYRIGHT = '';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            (0, core_1.info)("Run function executed.");
             // Get client and context
             const client = (0, github_1.getOctokit)((0, core_1.getInput)('GITHUB_TOKEN', { required: true }));
             let LectureNotesContents = '';
@@ -8566,6 +8567,7 @@ ${COPYRIGHT}`;
             });
         }
         catch (error) {
+            (0, core_1.info)("Error code (0).");
             return (0, core_1.setFailed)(error.message);
         }
     });
