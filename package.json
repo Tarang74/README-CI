@@ -5,7 +5,7 @@
     "description": "README Continuous Integration for LaTeX QUT Notes.",
     "main": "dist/index.js",
     "scripts": {
-        "build": "ncc build src/index.ts",
+        "build": "tsc && ncc build",
         "test": "jest"
     },
     "author": "Tarang Janawalkar",
