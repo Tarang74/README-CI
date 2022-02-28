@@ -8343,14 +8343,15 @@ function run() {
             owner: github_1.context.actor,
             repo: github_1.context.payload.repository.name,
             path: `${github_1.context.payload.repository.name} Lecture Notes.tex`,
-            ref: github_1.context.sha,
+            ref: github_1.context.sha
         })
             .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
                 let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
                 LectureNotesContents = buffer.toString();
             }
-        }).catch((onrejected) => {
+        })
+            .catch((onrejected) => {
             LN = false;
             (0, core_1.warning)(`No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Lecture Notes.tex\``);
         });
@@ -8359,14 +8360,15 @@ function run() {
             owner: github_1.context.actor,
             repo: github_1.context.payload.repository.name,
             path: `${github_1.context.payload.repository.name} Exam Notes.tex`,
-            ref: github_1.context.sha,
+            ref: github_1.context.sha
         })
             .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
                 let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
                 ExamNotesContents = buffer.toString();
             }
-        }).catch((onrejected) => {
+        })
+            .catch((onrejected) => {
             EN = false;
             (0, core_1.warning)(`No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Exam Notes.tex\``);
         });
@@ -8376,7 +8378,7 @@ function run() {
             owner: github_1.context.actor,
             repo: github_1.context.payload.repository.name,
             path: 'CODEOWNERS',
-            ref: github_1.context.sha,
+            ref: github_1.context.sha
         })
             .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
@@ -8423,14 +8425,29 @@ This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
 
 ${CONTENTS}${COPYRIGHT}`;
         // Output to README.md
-        yield client
-            .request('PUT /repos/{owner}/{repo}/contents/{path}', {
+        // Check if file exists
+        let requestOptions = {
             owner: github_1.context.actor,
             repo: github_1.context.payload.repository.name,
             path: 'README.md',
             message: 'Automated README CI.',
-            content: Buffer.from(output).toString('base64'),
+            content: Buffer.from(output).toString('base64')
+        };
+        yield client
+            .request('GET /repos/{owner}/{repo}/contents/{path}', {
+            owner: github_1.context.actor,
+            repo: github_1.context.payload.repository.name,
+            path: 'README.md',
+            ref: github_1.context.sha
         })
+            .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                requestOptions['sha'] = onfulfilled.data.sha;
+            }
+        })
+            .catch();
+        yield client
+            .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
             .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
                 return (0, core_1.info)('Successfully updated README.md.');
@@ -8438,7 +8455,8 @@ ${CONTENTS}${COPYRIGHT}`;
             else if (onfulfilled.status == 201) {
                 return (0, core_1.info)('Successfully created README.md.');
             }
-        }).catch((onrejected) => {
+        })
+            .catch((onrejected) => {
             return (0, core_1.error)(onrejected);
         });
     });

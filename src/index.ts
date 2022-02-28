@@ -34,7 +34,7 @@ async function run() {
             owner: context.actor,
             repo: context.payload.repository!.name,
             path: `${context.payload.repository!.name} Lecture Notes.tex`,
-            ref: context.sha,
+            ref: context.sha
         })
         .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
@@ -44,7 +44,8 @@ async function run() {
                 );
                 LectureNotesContents = buffer.toString();
             }
-        }).catch((onrejected) => {
+        })
+        .catch((onrejected) => {
             LN = false;
             warning(
                 `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
@@ -58,7 +59,7 @@ async function run() {
             owner: context.actor,
             repo: context.payload.repository!.name,
             path: `${context.payload.repository!.name} Exam Notes.tex`,
-            ref: context.sha,
+            ref: context.sha
         })
         .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
@@ -68,7 +69,8 @@ async function run() {
                 );
                 ExamNotesContents = buffer.toString();
             }
-        }).catch((onrejected) => {
+        })
+        .catch((onrejected) => {
             EN = false;
             warning(
                 `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
@@ -83,7 +85,7 @@ async function run() {
             owner: context.actor,
             repo: context.payload.repository!.name,
             path: 'CODEOWNERS',
-            ref: context.sha,
+            ref: context.sha
         })
         .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
@@ -136,21 +138,40 @@ This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
 ${CONTENTS}${COPYRIGHT}`;
 
     // Output to README.md
+
+    // Check if file exists
+    let requestOptions = {
+        owner: context.actor,
+        repo: context.payload.repository!.name,
+        path: 'README.md',
+        message: 'Automated README CI.',
+        content: Buffer.from(output).toString('base64')
+    };
+
     await client
-        .request('PUT /repos/{owner}/{repo}/contents/{path}', {
+        .request('GET /repos/{owner}/{repo}/contents/{path}', {
             owner: context.actor,
             repo: context.payload.repository!.name,
             path: 'README.md',
-            message: 'Automated README CI.',
-            content: Buffer.from(output).toString('base64'),
+            ref: context.sha
         })
+        .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                requestOptions['sha'] = (onfulfilled.data as any).sha;
+            }
+        })
+        .catch();
+
+    await client
+        .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
         .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
                 return info('Successfully updated README.md.');
             } else if (onfulfilled.status == 201) {
                 return info('Successfully created README.md.');
             }
-        }).catch((onrejected) => {
+        })
+        .catch((onrejected) => {
             return error(onrejected);
         });
 }
