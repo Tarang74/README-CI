@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "type": "commonjs",
     "description": "README Continuous Integration for LaTeX QUT Notes.",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "scripts": {
         "build": "ncc build src/index.ts",
         "test": "jest"
