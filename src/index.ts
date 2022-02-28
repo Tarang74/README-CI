@@ -144,7 +144,7 @@ ${COPYRIGHT}`;
             repo: context.payload.repository!.name,
             path: 'README.md',
             message: 'Automated README CI.',
-            content: output,
+            content: Buffer.from(output).toString('base64'),
         })
         .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
