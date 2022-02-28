@@ -8380,7 +8380,7 @@ function run() {
         })
             .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(onfulfilled.data.contents, onfulfilled.data.encoding);
+                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
                 CodeOwnersContents = buffer.toString();
             }
             else {
