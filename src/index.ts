@@ -17,116 +17,115 @@ let WHICH_NOTES = '';
 let COPYRIGHT = '';
 
 async function run() {
-    try {
-        info("Run function executed.");
+    // Get client and context
+    const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
 
-        // Get client and context
-        const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
+    let LectureNotesContents = '';
+    let ExamNotesContents = '';
+    let CodeOwnersContents = '';
 
-        let LectureNotesContents = '';
-        let ExamNotesContents = '';
-        let CodeOwnersContents = '';
+    let LN = true;
+    let EN = true;
+    let CO = true;
 
-        let LN = true;
-        let EN = true;
-        let CO = true;
+    // Look for lecture notes/exam notes files
+    await client
+        .request('GET /repos/{owner}/{repo}/contents/{path}', {
+            owner: context.actor,
+            repo: context.payload.repository!.name,
+            path: `${context.payload.repository!.name} Lecture Notes.tex`,
+            ref: context.sha,
+        })
+        .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                let buffer = Buffer.from(
+                    (onfulfilled.data as any).content,
+                    (onfulfilled.data as any).encoding
+                );
+                LectureNotesContents = buffer.toString();
+            } else {
+                LN = false;
+                warning(
+                    `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
+                        context.payload.repository!.name
+                    } Lecture Notes.tex\``
+                );
+            }
+        });
 
-        // Look for lecture notes/exam notes files
-        await client
-            .request('GET /repos/{owner}/{repo}/contents/{path}', {
-                owner: context.actor,
-                repo: context.payload.repository!.name,
-                path: `${context.payload.repository!.name} Lecture Notes.tex`,
-                ref: context.sha,
-            })
-            .then((onfulfilled) => {
-                if (onfulfilled.status == 200) {
-                    let buffer = Buffer.from(
-                        (onfulfilled.data as any).content,
-                        (onfulfilled.data as any).encoding
-                    );
-                    LectureNotesContents = buffer.toString();
-                } else {
-                    LN = false;
-                    warning(
-                        `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
-                            context.payload.repository!.name
-                        } Lecture Notes.tex\``
-                    );
-                }
-            });
+    await client
+        .request('GET /repos/{owner}/{repo}/contents/{path}', {
+            owner: context.actor,
+            repo: context.payload.repository!.name,
+            path: `${context.payload.repository!.name} Exam Notes.tex`,
+            ref: context.sha,
+        })
+        .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                let buffer = Buffer.from(
+                    (onfulfilled.data as any).content,
+                    (onfulfilled.data as any).encoding
+                );
+                ExamNotesContents = buffer.toString();
+            } else {
+                EN = false;
+                warning(
+                    `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
+                        context.payload.repository!.name
+                    } Exam Notes.tex\``
+                );
+            }
+        });
 
-        await client
-            .request('GET /repos/{owner}/{repo}/contents/{path}', {
-                owner: context.actor,
-                repo: context.payload.repository!.name,
-                path: `${context.payload.repository!.name} Exam Notes.tex`,
-                ref: context.sha,
-            })
-            .then((onfulfilled) => {
-                if (onfulfilled.status == 200) {
-                    let buffer = Buffer.from(
-                        (onfulfilled.data as any).content,
-                        (onfulfilled.data as any).encoding
-                    );
-                    ExamNotesContents = buffer.toString();
-                } else {
-                    EN = false;
-                    warning(
-                        `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
-                            context.payload.repository!.name
-                        } Exam Notes.tex\``
-                    );
-                }
-            });
+    // Try to get CODEOWNERS file
+    await client
+        .request('GET /repos/{owner}/{repo}/contents/{path}', {
+            owner: context.actor,
+            repo: context.payload.repository!.name,
+            path: 'CODEOWNERS',
+            ref: context.sha,
+        })
+        .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                let buffer = Buffer.from(
+                    (onfulfilled as any).contents,
+                    (onfulfilled as any).encoding
+                );
+                CodeOwnersContents = buffer.toString();
+            } else {
+                CO = false;
+            }
+        });
 
-        // Try to get CODEOWNERS file
-        await client
-            .request('GET /repos/{owner}/{repo}/contents/{path}', {
-                owner: context.actor,
-                repo: context.payload.repository!.name,
-                path: 'CODEOWNERS',
-                ref: context.sha,
-            })
-            .then((onfulfilled) => {
-                if (onfulfilled.status == 200) {
-                    let buffer = Buffer.from(
-                        (onfulfilled as any).contents,
-                        (onfulfilled as any).encoding
-                    );
-                    CodeOwnersContents = buffer.toString();
-                } else {
-                    CO = false;
-                }
-            });
+    info('Successfully fetched all required files.');
 
-        if (!CO) return error(`No CODEOWNERS file was provided in repository.`);
+    if (!CO) return error(`No CODEOWNERS file was provided in repository.`);
 
-        if (!LN && !EN) {
-            return error('No source files were found, ending workflow.');
-        }
+    if (!LN && !EN) {
+        return error('No source files were found, ending workflow.');
+    }
 
-        // Set variables for README template
-        // UNIT_CODE
-        UNIT_CODE = context.payload.repository!.name;
+    // Set variables for README template
+    // UNIT_CODE
+    UNIT_CODE = context.payload.repository!.name;
 
-        // CONTRIBUTORS
-        parseCODEOWNERS(CodeOwnersContents, context.actor);
+    // CONTRIBUTORS
+    parseCODEOWNERS(CodeOwnersContents, context.actor);
 
-        // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
-        if (LN && EN) {
-            WHICH_NOTES = '**lecture notes** and **exam notes**';
-            parseLectureNotesContents(LectureNotesContents);
-        } else if (LN) {
-            WHICH_NOTES = '**lecture notes**';
-            parseLectureNotesContents(LectureNotesContents);
-        } else if (EN) {
-            WHICH_NOTES = '**exam notes**';
-            parseExamNotesContents(ExamNotesContents);
-        }
+    // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
+    if (LN && EN) {
+        WHICH_NOTES = '**lecture notes** and **exam notes**';
+        parseLectureNotesContents(LectureNotesContents);
+    } else if (LN) {
+        WHICH_NOTES = '**lecture notes**';
+        parseLectureNotesContents(LectureNotesContents);
+    } else if (EN) {
+        WHICH_NOTES = '**exam notes**';
+        parseExamNotesContents(ExamNotesContents);
+    }
 
-        // Combine all variables
-        let output = `# ${UNIT_CODE} - ${UNIT_NAME}
+    // Combine all variables
+    let output = `# ${UNIT_CODE} - ${UNIT_NAME}
 
 ## ${UNIT_COORDINATOR}
 
@@ -140,26 +139,24 @@ ${CONTENTS}---
 
 ${COPYRIGHT}`;
 
-        // Output to README.md
-        await client
-            .request('PUT /repos/{owner}/{repo}/contents/{path}', {
-                owner: context.actor,
-                repo: context.payload.repository!.name,
-                path: 'README.md',
-                message: 'Automated README CI.',
-                content: output,
-            })
-            .then((onfulfilled) => {
-                if (onfulfilled.status == 200) {
-                    return info('Successfully updated README.md.');
-                } else if (onfulfilled.status == 201) {
-                    return info('Successfully created README.md.');
-                }
-            });
-    } catch (error: any) {
-        info("Error code (0).")
-        return setFailed(error.message);
-    }
+    info('Before putting README.md.');
+
+    // Output to README.md
+    await client
+        .request('PUT /repos/{owner}/{repo}/contents/{path}', {
+            owner: context.actor,
+            repo: context.payload.repository!.name,
+            path: 'README.md',
+            message: 'Automated README CI.',
+            content: output,
+        })
+        .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                return info('Successfully updated README.md.');
+            } else if (onfulfilled.status == 201) {
+                return info('Successfully created README.md.');
+            }
+        });
 }
 
 function parseCODEOWNERS(s: string, owner: string) {
