@@ -6,6 +6,10 @@ inputs:
   GITHUB_TOKEN:
     description: GitHub token
     required: true
+  LEVEL_MACRO:
+    description: Choose which level macro to use when enumerating contents
+    default: section
+    required: true
 
 runs:
   using: node16

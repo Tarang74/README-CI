@@ -8331,6 +8331,7 @@ function run() {
     return __awaiter(this, void 0, void 0, function* () {
         // Get client and context
         const client = (0, github_1.getOctokit)((0, core_1.getInput)('GITHUB_TOKEN', { required: true }));
+        const levelMacro = (0, core_1.getInput)('LEVEL_MACRO', { required: true });
         let LectureNotesContents = '';
         let ExamNotesContents = '';
         let CodeOwnersContents = '';
@@ -8402,11 +8403,11 @@ function run() {
         // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
         if (LN && EN) {
             WHICH_NOTES = '**lecture notes** and **exam notes**';
-            parseLectureNotesContents(LectureNotesContents);
+            parseLectureNotesContents(LectureNotesContents, levelMacro);
         }
         else if (LN) {
             WHICH_NOTES = '**lecture notes**';
-            parseLectureNotesContents(LectureNotesContents);
+            parseLectureNotesContents(LectureNotesContents, levelMacro);
         }
         else if (EN) {
             WHICH_NOTES = '**exam notes**';
@@ -8549,7 +8550,7 @@ function parseExamNotesContents(s) {
     }
 }
 exports.parseExamNotesContents = parseExamNotesContents;
-function parseLectureNotesContents(s) {
+function parseLectureNotesContents(s, levelMacro) {
     const lines = s.split(/\r?\n/);
     let copyrightVersion = '';
     let copyrightModifier = '';
@@ -8578,8 +8579,8 @@ function parseLectureNotesContents(s) {
         else if (v.startsWith('version={')) {
             copyrightVersion = v.slice(9).split('}')[0];
         }
-        else if (v.startsWith('\\section{')) {
-            sections.push(v.slice(9).split('}')[0]);
+        else if (v.startsWith(`\\${levelMacro}{`)) {
+            sections.push(v.slice(levelMacro.length + 1).split('}')[0]);
         }
     });
     if (copyrightModifier != '' && copyrightVersion != '') {

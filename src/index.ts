@@ -19,6 +19,7 @@ let COPYRIGHT = '';
 async function run() {
     // Get client and context
     const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
+    const levelMacro = getInput('LEVEL_MACRO', { required: true });
 
     let LectureNotesContents = '';
     let ExamNotesContents = '';
@@ -115,10 +116,10 @@ async function run() {
     // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
     if (LN && EN) {
         WHICH_NOTES = '**lecture notes** and **exam notes**';
-        parseLectureNotesContents(LectureNotesContents);
+        parseLectureNotesContents(LectureNotesContents, levelMacro);
     } else if (LN) {
         WHICH_NOTES = '**lecture notes**';
-        parseLectureNotesContents(LectureNotesContents);
+        parseLectureNotesContents(LectureNotesContents, levelMacro);
     } else if (EN) {
         WHICH_NOTES = '**exam notes**';
         parseExamNotesContents(ExamNotesContents);
@@ -272,7 +273,7 @@ export function parseExamNotesContents(s: string) {
     }
 }
 
-export function parseLectureNotesContents(s: string) {
+export function parseLectureNotesContents(s: string, levelMacro: string) {
     const lines = s.split(/\r?\n/);
 
     let copyrightVersion = '';
@@ -300,8 +301,8 @@ export function parseLectureNotesContents(s: string) {
             copyrightModifier = v.slice(10).split('}')[0];
         } else if (v.startsWith('version={')) {
             copyrightVersion = v.slice(9).split('}')[0];
-        } else if (v.startsWith('\\section{')) {
-            sections.push(v.slice(9).split('}')[0]);
+        } else if (v.startsWith(`\\${levelMacro}{`)) {
+            sections.push(v.slice(levelMacro.length + 1).split('}')[0]);
         }
     });
 
