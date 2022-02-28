@@ -116,13 +116,13 @@ async function run() {
     // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
     if (LN && EN) {
         WHICH_NOTES = '**lecture notes** and **exam notes**';
-        parseLectureNotesContents(LectureNotesContents, levelMacro);
+        parseNotesContents(LectureNotesContents, levelMacro);
     } else if (LN) {
         WHICH_NOTES = '**lecture notes**';
-        parseLectureNotesContents(LectureNotesContents, levelMacro);
+        parseNotesContents(LectureNotesContents, levelMacro);
     } else if (EN) {
         WHICH_NOTES = '**exam notes**';
-        parseExamNotesContents(ExamNotesContents);
+        parseNotesContents(ExamNotesContents, levelMacro);
     }
 
     // Combine all variables
@@ -227,53 +227,7 @@ function parseCODEOWNERS(s: string, owner: string) {
     }
 }
 
-export function parseExamNotesContents(s: string) {
-    const lines = s.split(/\r?\n/);
-
-    let copyrightVersion = '';
-    let copyrightModifier = '';
-
-    lines.forEach((v) => {
-        v = v.trim();
-
-        // Skip if comment
-        if (v.startsWith('%')) {
-            return;
-        }
-
-        // Find other macros
-        if (v.startsWith('\\newcommand{\\unitName}')) {
-            UNIT_NAME = v.slice(23).split('}')[0];
-        } else if (v.startsWith('\\newcommand{\\unitTime}')) {
-            let time = v.slice(23).split('}')[0];
-            SEMESTER = time[9];
-            YEAR = time.slice(12);
-        } else if (v.startsWith('\\newcommand{\\unitCoordinator}')) {
-            UNIT_COORDINATOR = v.slice(30).split('}')[0];
-        } else if (v.startsWith('modifier={')) {
-            copyrightModifier = v.slice(10).split('}')[0];
-        } else if (v.startsWith('version={')) {
-            copyrightVersion = v.slice(9).split('}')[0];
-        }
-    });
-
-    if (copyrightModifier != '' && copyrightVersion != '') {
-        COPYRIGHT = setCopyrightInformation(
-            copyrightModifier,
-            copyrightVersion
-        );
-    } else if (copyrightModifier != '' && copyrightVersion == '') {
-        COPYRIGHT = setCopyrightInformation(copyrightModifier, '4.0');
-    } else if (copyrightModifier == '' && copyrightVersion != '') {
-        warning('No copyright modifier was set.');
-        COPYRIGHT = '';
-    } else {
-        warning('No copyright license was set.');
-        COPYRIGHT = '';
-    }
-}
-
-export function parseLectureNotesContents(s: string, levelMacro: string) {
+export function parseNotesContents(s: string, levelMacro: string) {
     const lines = s.split(/\r?\n/);
 
     let copyrightVersion = '';

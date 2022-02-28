@@ -8314,7 +8314,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseLectureNotesContents = exports.parseExamNotesContents = void 0;
+exports.parseNotesContents = void 0;
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
 // Template placeholders for README
@@ -8403,15 +8403,15 @@ function run() {
         // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
         if (LN && EN) {
             WHICH_NOTES = '**lecture notes** and **exam notes**';
-            parseLectureNotesContents(LectureNotesContents, levelMacro);
+            parseNotesContents(LectureNotesContents, levelMacro);
         }
         else if (LN) {
             WHICH_NOTES = '**lecture notes**';
-            parseLectureNotesContents(LectureNotesContents, levelMacro);
+            parseNotesContents(LectureNotesContents, levelMacro);
         }
         else if (EN) {
             WHICH_NOTES = '**exam notes**';
-            parseExamNotesContents(ExamNotesContents);
+            parseNotesContents(ExamNotesContents, levelMacro);
         }
         // Combine all variables
         let output = `# ${UNIT_CODE} - ${UNIT_NAME}
@@ -8505,52 +8505,7 @@ function parseCODEOWNERS(s, owner) {
         CONTRIBUTORS = '';
     }
 }
-function parseExamNotesContents(s) {
-    const lines = s.split(/\r?\n/);
-    let copyrightVersion = '';
-    let copyrightModifier = '';
-    lines.forEach((v) => {
-        v = v.trim();
-        // Skip if comment
-        if (v.startsWith('%')) {
-            return;
-        }
-        // Find other macros
-        if (v.startsWith('\\newcommand{\\unitName}')) {
-            UNIT_NAME = v.slice(23).split('}')[0];
-        }
-        else if (v.startsWith('\\newcommand{\\unitTime}')) {
-            let time = v.slice(23).split('}')[0];
-            SEMESTER = time[9];
-            YEAR = time.slice(12);
-        }
-        else if (v.startsWith('\\newcommand{\\unitCoordinator}')) {
-            UNIT_COORDINATOR = v.slice(30).split('}')[0];
-        }
-        else if (v.startsWith('modifier={')) {
-            copyrightModifier = v.slice(10).split('}')[0];
-        }
-        else if (v.startsWith('version={')) {
-            copyrightVersion = v.slice(9).split('}')[0];
-        }
-    });
-    if (copyrightModifier != '' && copyrightVersion != '') {
-        COPYRIGHT = setCopyrightInformation(copyrightModifier, copyrightVersion);
-    }
-    else if (copyrightModifier != '' && copyrightVersion == '') {
-        COPYRIGHT = setCopyrightInformation(copyrightModifier, '4.0');
-    }
-    else if (copyrightModifier == '' && copyrightVersion != '') {
-        (0, core_1.warning)('No copyright modifier was set.');
-        COPYRIGHT = '';
-    }
-    else {
-        (0, core_1.warning)('No copyright license was set.');
-        COPYRIGHT = '';
-    }
-}
-exports.parseExamNotesContents = parseExamNotesContents;
-function parseLectureNotesContents(s, levelMacro) {
+function parseNotesContents(s, levelMacro) {
     const lines = s.split(/\r?\n/);
     let copyrightVersion = '';
     let copyrightModifier = '';
@@ -8604,7 +8559,7 @@ function parseLectureNotesContents(s, levelMacro) {
         CONTENTS = '';
     }
 }
-exports.parseLectureNotesContents = parseLectureNotesContents;
+exports.parseNotesContents = parseNotesContents;
 function formatContents(sections) {
     let output = '*The contents of the lecture notes are described below.*\n\n---\n\n## Contents\n\n';
     sections.forEach((s, i) => {
