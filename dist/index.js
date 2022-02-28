@@ -8332,7 +8332,7 @@ function run() {
         // Get client and context
         const client = (0, github_1.getOctokit)((0, core_1.getInput)('GITHUB_TOKEN', { required: true }));
         const levelMacro = (0, core_1.getInput)('LEVEL_MACRO', { required: true });
-        (0, core_1.info)(client);
+        (0, core_1.info)(client[0]);
         let LectureNotesContents = '';
         let ExamNotesContents = '';
         let CodeOwnersContents = '';
