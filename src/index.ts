@@ -21,7 +21,7 @@ async function run() {
     const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
     const levelMacro = getInput('LEVEL_MACRO', { required: true });
 
-    info(client as any as string);
+    info(context as any as string);
 
     let LectureNotesContents = '';
     let ExamNotesContents = '';
