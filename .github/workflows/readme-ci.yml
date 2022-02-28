@@ -15,6 +15,6 @@ jobs:
         uses: actions/setup-node@main
         
       - name: Tarang74/README-CI
-        uses: Tarang74/README-CI@main
+        uses: Tarang74/README-CI@testing
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
