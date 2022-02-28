@@ -8346,8 +8346,10 @@ function run() {
             ref: github_1.context.sha,
         })
             .then((onfulfilled) => {
-            let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
-            LectureNotesContents = buffer.toString();
+            if (onfulfilled.status == 200) {
+                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
+                LectureNotesContents = buffer.toString();
+            }
         }).catch((onrejected) => {
             LN = false;
             (0, core_1.warning)(`No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Lecture Notes.tex\``);
@@ -8360,8 +8362,10 @@ function run() {
             ref: github_1.context.sha,
         })
             .then((onfulfilled) => {
-            let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
-            ExamNotesContents = buffer.toString();
+            if (onfulfilled.status == 200) {
+                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
+                ExamNotesContents = buffer.toString();
+            }
         }).catch((onrejected) => {
             EN = false;
             (0, core_1.warning)(`No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Exam Notes.tex\``);

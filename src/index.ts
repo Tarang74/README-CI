@@ -37,11 +37,13 @@ async function run() {
             ref: context.sha,
         })
         .then((onfulfilled) => {
-            let buffer = Buffer.from(
-                (onfulfilled.data as any).content,
-                (onfulfilled.data as any).encoding
-            );
-            LectureNotesContents = buffer.toString();
+            if (onfulfilled.status == 200) {
+                let buffer = Buffer.from(
+                    (onfulfilled.data as any).content,
+                    (onfulfilled.data as any).encoding
+                );
+                LectureNotesContents = buffer.toString();
+            }
         }).catch((onrejected) => {
             LN = false;
             warning(
@@ -59,11 +61,13 @@ async function run() {
             ref: context.sha,
         })
         .then((onfulfilled) => {
-            let buffer = Buffer.from(
-                (onfulfilled.data as any).content,
-                (onfulfilled.data as any).encoding
-            );
-            ExamNotesContents = buffer.toString();
+            if (onfulfilled.status == 200) {
+                let buffer = Buffer.from(
+                    (onfulfilled.data as any).content,
+                    (onfulfilled.data as any).encoding
+                );
+                ExamNotesContents = buffer.toString();
+            }
         }).catch((onrejected) => {
             EN = false;
             warning(
