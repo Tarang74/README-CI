@@ -21,6 +21,8 @@ async function run() {
     const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
     const levelMacro = getInput('LEVEL_MACRO', { required: true });
 
+    info(client as any as string);
+
     let LectureNotesContents = '';
     let ExamNotesContents = '';
     let CodeOwnersContents = '';
@@ -96,12 +98,12 @@ async function run() {
                 CodeOwnersContents = buffer.toString();
             }
         }).catch((onrejected) => {
-            return error(`No CODEOWNERS file was provided in repository.`);
+            return setFailed(`No CODEOWNERS file was provided in repository.`);
         });
 
 
     if (!LN && !EN) {
-        return error('No source files were found, ending workflow.');
+        return setFailed('No source files were found, ending workflow.');
     }
 
     // Set variables for README template
@@ -171,7 +173,7 @@ ${CONTENTS}${COPYRIGHT}`;
             }
         })
         .catch((onrejected) => {
-            return error(onrejected);
+            return setFailed(onrejected);
         });
 }
 

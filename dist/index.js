@@ -8332,7 +8332,7 @@ function run() {
         // Get client and context
         const client = (0, github_1.getOctokit)((0, core_1.getInput)('GITHUB_TOKEN', { required: true }));
         const levelMacro = (0, core_1.getInput)('LEVEL_MACRO', { required: true });
-        console.log(client);
+        (0, core_1.info)(client);
         let LectureNotesContents = '';
         let ExamNotesContents = '';
         let CodeOwnersContents = '';
@@ -8387,10 +8387,10 @@ function run() {
                 CodeOwnersContents = buffer.toString();
             }
         }).catch((onrejected) => {
-            return (0, core_1.error)(`No CODEOWNERS file was provided in repository.`);
+            return (0, core_1.setFailed)(`No CODEOWNERS file was provided in repository.`);
         });
         if (!LN && !EN) {
-            return (0, core_1.error)('No source files were found, ending workflow.');
+            return (0, core_1.setFailed)('No source files were found, ending workflow.');
         }
         // Set variables for README template
         // UNIT_CODE
@@ -8455,7 +8455,7 @@ ${CONTENTS}${COPYRIGHT}`;
             }
         })
             .catch((onrejected) => {
-            return (0, core_1.error)(onrejected);
+            return (0, core_1.setFailed)(onrejected);
         });
     });
 }
