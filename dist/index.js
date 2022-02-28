@@ -8314,7 +8314,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseNotesContents = void 0;
+exports.parseNotesContents = exports.parseCODEOWNERS = void 0;
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
 // Template placeholders for README
@@ -8395,7 +8395,7 @@ function run() {
         // UNIT_CODE
         UNIT_CODE = github_1.context.payload.repository.name;
         // CONTRIBUTORS
-        parseCODEOWNERS(CodeOwnersContents);
+        CONTRIBUTORS = parseCODEOWNERS(CodeOwnersContents);
         // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
         if (LN && EN) {
             WHICH_NOTES = '**lecture notes** and **exam notes**';
@@ -8459,8 +8459,9 @@ ${CONTENTS}${COPYRIGHT}`;
     });
 }
 function parseCODEOWNERS(s) {
+    let output = '';
     const lines = s.split(/\r?\n/);
-    let usernames = [''];
+    let usernames = [];
     lines.forEach((v, i) => {
         v = v.trim();
         // Skip if comment
@@ -8493,15 +8494,14 @@ function parseCODEOWNERS(s) {
                 }
             }
         });
-        CONTRIBUTORS = `Thanks to ${usernamesText} for the collaboration.\n\n`;
+        output = `Thanks to ${usernamesText} for the collaboration.\n\n`;
     }
-    else if (usernames.length == 1) {
-        CONTRIBUTORS = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
+    else if (usernamesArray.length == 1) {
+        output = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
     }
-    else {
-        CONTRIBUTORS = '';
-    }
+    return output;
 }
+exports.parseCODEOWNERS = parseCODEOWNERS;
 function parseNotesContents(s, levelMacro) {
     const lines = s.split(/\r?\n/);
     let copyrightVersion = '';

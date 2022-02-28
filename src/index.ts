@@ -109,7 +109,7 @@ async function run() {
     UNIT_CODE = context.payload.repository!.name;
 
     // CONTRIBUTORS
-    parseCODEOWNERS(CodeOwnersContents);
+    CONTRIBUTORS = parseCODEOWNERS(CodeOwnersContents);
 
     // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
     if (LN && EN) {
@@ -175,9 +175,10 @@ ${CONTENTS}${COPYRIGHT}`;
         });
 }
 
-function parseCODEOWNERS(s: string) {
+export function parseCODEOWNERS(s: string): string {
+    let output = '';
     const lines = s.split(/\r?\n/);
-    let usernames:Array<string> = [''];
+    let usernames:Array<string> = [];
 
     lines.forEach((v, i) => {
         v = v.trim();
@@ -218,12 +219,11 @@ function parseCODEOWNERS(s: string) {
             }
         });
 
-        CONTRIBUTORS = `Thanks to ${usernamesText} for the collaboration.\n\n`;
-    } else if (usernames.length == 1) {
-        CONTRIBUTORS = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
-    } else {
-        CONTRIBUTORS = '';
+        output = `Thanks to ${usernamesText} for the collaboration.\n\n`;
+    } else if (usernamesArray.length == 1) {
+        output = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
     }
+    return output;
 }
 
 export function parseNotesContents(s: string, levelMacro: string) {
