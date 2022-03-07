@@ -8427,7 +8427,7 @@ ${CONTENTS}${COPYRIGHT}`;
             owner: github_1.context.payload.repository.owner.name,
             repo: github_1.context.payload.repository.name,
             path: 'README.md',
-            message: 'README CI.',
+            message: 'README CI',
             content: Buffer.from(output).toString('base64')
         };
         yield client

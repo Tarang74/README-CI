@@ -48,8 +48,7 @@ async function run() {
         .catch((onrejected) => {
             LN = false;
             warning(
-                `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
-                    context.payload.repository!.name
+                `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${context.payload.repository!.name
                 } Lecture Notes.tex\``
             );
         });
@@ -73,8 +72,7 @@ async function run() {
         .catch((onrejected) => {
             EN = false;
             warning(
-                `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${
-                    context.payload.repository!.name
+                `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${context.payload.repository!.name
                 } Exam Notes.tex\``
             );
         });
@@ -143,7 +141,7 @@ ${CONTENTS}${COPYRIGHT}`;
         owner: context.payload.repository!.owner.name!,
         repo: context.payload.repository!.name,
         path: 'README.md',
-        message: 'README CI.',
+        message: 'README CI',
         content: Buffer.from(output).toString('base64')
     };
 
@@ -159,7 +157,7 @@ ${CONTENTS}${COPYRIGHT}`;
                 requestOptions['sha'] = (onfulfilled.data as any).sha;
             }
         })
-        .catch(() => {});
+        .catch(() => { });
 
     await client
         .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
@@ -178,7 +176,7 @@ ${CONTENTS}${COPYRIGHT}`;
 export function parseCODEOWNERS(s: string): string {
     let output = '';
     const lines = s.split(/\r?\n/);
-    let usernames:Array<string> = [];
+    let usernames: Array<string> = [];
 
     lines.forEach((v, i) => {
         v = v.trim();
