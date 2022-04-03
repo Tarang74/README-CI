@@ -1,6 +1,6 @@
 {
   "name": "readme-ci",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "type": "commonjs",
   "description": "README Continuous Integration for LaTeX QUT Notes.",
   "main": "dist/index.js",

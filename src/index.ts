@@ -4,6 +4,8 @@ import { context, getOctokit } from '@actions/github';
 // Template placeholders for README
 let CONTRIBUTORS = '';
 
+let DOWNLOADS = '';
+
 let UNIT_CODE = '';
 let UNIT_NAME = '';
 let UNIT_COORDINATOR = '';
@@ -113,12 +115,15 @@ async function run() {
     if (LN && EN) {
         WHICH_NOTES = '**lecture notes** and **exam notes**';
         parseNotesContents(LectureNotesContents, levelMacro);
+        DOWNLOADS = `[Lecture notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)\n[Exam notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)\n\n`;
     } else if (LN) {
         WHICH_NOTES = '**lecture notes**';
         parseNotesContents(LectureNotesContents, levelMacro);
+        DOWNLOADS = `[Lecture notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)\n\n`;
     } else if (EN) {
         WHICH_NOTES = '**exam notes**';
         parseNotesContents(ExamNotesContents, levelMacro);
+        DOWNLOADS = `[Exam notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)\n\n`;
     }
 
     // Combine all variables
@@ -128,7 +133,7 @@ async function run() {
 
 ### Semester ${SEMESTER}, ${YEAR}
 
-${CONTRIBUTORS}---
+${DOWNLOADS}${CONTRIBUTORS}---
 
 This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
 
