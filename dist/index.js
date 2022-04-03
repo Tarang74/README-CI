@@ -8401,17 +8401,17 @@ function run() {
         if (LN && EN) {
             WHICH_NOTES = '**lecture notes** and **exam notes**';
             parseNotesContents(LectureNotesContents, levelMacro);
-            DOWNLOADS = `[Lecture notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)\n[Exam notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)\n\n`;
+            DOWNLOADS = `Lecture notes download: [Lecture notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)\nExam notes download: [Exam notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)`;
         }
         else if (LN) {
             WHICH_NOTES = '**lecture notes**';
             parseNotesContents(LectureNotesContents, levelMacro);
-            DOWNLOADS = `[Lecture notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)\n\n`;
+            DOWNLOADS = `Lecture notes download: [Lecture notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)`;
         }
         else if (EN) {
             WHICH_NOTES = '**exam notes**';
             parseNotesContents(ExamNotesContents, levelMacro);
-            DOWNLOADS = `[Exam notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)\n\n`;
+            DOWNLOADS = `Exam notes download: [Exam notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)`;
         }
         // Combine all variables
         let output = `# ${UNIT_CODE} - ${UNIT_NAME}
@@ -8420,7 +8420,13 @@ function run() {
 
 ### Semester ${SEMESTER}, ${YEAR}
 
-${DOWNLOADS}${CONTRIBUTORS}---
+---
+
+## Downloads
+
+${DOWNLOADS}
+
+${CONTRIBUTORS}---
 
 This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
 
