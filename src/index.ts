@@ -115,15 +115,15 @@ async function run() {
     if (LN && EN) {
         WHICH_NOTES = '**lecture notes** and **exam notes**';
         parseNotesContents(LectureNotesContents, levelMacro);
-        DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)\nExam notes download: [${UNIT_CODE} Exam Notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)`;
+        DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)\nExam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
     } else if (LN) {
         WHICH_NOTES = '**lecture notes**';
         parseNotesContents(LectureNotesContents, levelMacro);
-        DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](${UNIT_CODE}%20Lecture%20Notes.pdf)`;
+        DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)`;
     } else if (EN) {
         WHICH_NOTES = '**exam notes**';
         parseNotesContents(ExamNotesContents, levelMacro);
-        DOWNLOADS = `Exam notes download: [${UNIT_CODE} Exam Notes PDF](${UNIT_CODE}%20Exam%20Notes.pdf)`;
+        DOWNLOADS = `Exam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
     }
 
     // Combine all variables
