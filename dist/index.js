@@ -415,6 +415,23 @@ function getIDToken(aud) {
     });
 }
 exports.getIDToken = getIDToken;
+/**
+ * Summary exports
+ */
+var summary_1 = __nccwpck_require__(1327);
+Object.defineProperty(exports, "summary", ({ enumerable: true, get: function () { return summary_1.summary; } }));
+/**
+ * @deprecated use core.summary
+ */
+var summary_2 = __nccwpck_require__(1327);
+Object.defineProperty(exports, "markdownSummary", ({ enumerable: true, get: function () { return summary_2.markdownSummary; } }));
+/**
+ * Path exports
+ */
+var path_utils_1 = __nccwpck_require__(2981);
+Object.defineProperty(exports, "toPosixPath", ({ enumerable: true, get: function () { return path_utils_1.toPosixPath; } }));
+Object.defineProperty(exports, "toWin32Path", ({ enumerable: true, get: function () { return path_utils_1.toWin32Path; } }));
+Object.defineProperty(exports, "toPlatformPath", ({ enumerable: true, get: function () { return path_utils_1.toPlatformPath; } }));
 //# sourceMappingURL=core.js.map
 
 /***/ }),
@@ -484,8 +501,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.OidcClient = void 0;
-const http_client_1 = __nccwpck_require__(9925);
-const auth_1 = __nccwpck_require__(3702);
+const http_client_1 = __nccwpck_require__(6255);
+const auth_1 = __nccwpck_require__(5526);
 const core_1 = __nccwpck_require__(2186);
 class OidcClient {
     static createHttpClient(allowRetry = true, maxRetry = 10) {
@@ -549,6 +566,361 @@ class OidcClient {
 }
 exports.OidcClient = OidcClient;
 //# sourceMappingURL=oidc-utils.js.map
+
+/***/ }),
+
+/***/ 2981:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.toPlatformPath = exports.toWin32Path = exports.toPosixPath = void 0;
+const path = __importStar(__nccwpck_require__(1017));
+/**
+ * toPosixPath converts the given path to the posix form. On Windows, \\ will be
+ * replaced with /.
+ *
+ * @param pth. Path to transform.
+ * @return string Posix path.
+ */
+function toPosixPath(pth) {
+    return pth.replace(/[\\]/g, '/');
+}
+exports.toPosixPath = toPosixPath;
+/**
+ * toWin32Path converts the given path to the win32 form. On Linux, / will be
+ * replaced with \\.
+ *
+ * @param pth. Path to transform.
+ * @return string Win32 path.
+ */
+function toWin32Path(pth) {
+    return pth.replace(/[/]/g, '\\');
+}
+exports.toWin32Path = toWin32Path;
+/**
+ * toPlatformPath converts the given path to a platform-specific path. It does
+ * this by replacing instances of / and \ with the platform-specific path
+ * separator.
+ *
+ * @param pth The path to platformize.
+ * @return string The platform-specific path.
+ */
+function toPlatformPath(pth) {
+    return pth.replace(/[/\\]/g, path.sep);
+}
+exports.toPlatformPath = toPlatformPath;
+//# sourceMappingURL=path-utils.js.map
+
+/***/ }),
+
+/***/ 1327:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.summary = exports.markdownSummary = exports.SUMMARY_DOCS_URL = exports.SUMMARY_ENV_VAR = void 0;
+const os_1 = __nccwpck_require__(2037);
+const fs_1 = __nccwpck_require__(7147);
+const { access, appendFile, writeFile } = fs_1.promises;
+exports.SUMMARY_ENV_VAR = 'GITHUB_STEP_SUMMARY';
+exports.SUMMARY_DOCS_URL = 'https://docs.github.com/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary';
+class Summary {
+    constructor() {
+        this._buffer = '';
+    }
+    /**
+     * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
+     * Also checks r/w permissions.
+     *
+     * @returns step summary file path
+     */
+    filePath() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._filePath) {
+                return this._filePath;
+            }
+            const pathFromEnv = process.env[exports.SUMMARY_ENV_VAR];
+            if (!pathFromEnv) {
+                throw new Error(`Unable to find environment variable for $${exports.SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`);
+            }
+            try {
+                yield access(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
+            }
+            catch (_a) {
+                throw new Error(`Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`);
+            }
+            this._filePath = pathFromEnv;
+            return this._filePath;
+        });
+    }
+    /**
+     * Wraps content in an HTML tag, adding any HTML attributes
+     *
+     * @param {string} tag HTML tag to wrap
+     * @param {string | null} content content within the tag
+     * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
+     *
+     * @returns {string} content wrapped in HTML element
+     */
+    wrap(tag, content, attrs = {}) {
+        const htmlAttrs = Object.entries(attrs)
+            .map(([key, value]) => ` ${key}="${value}"`)
+            .join('');
+        if (!content) {
+            return `<${tag}${htmlAttrs}>`;
+        }
+        return `<${tag}${htmlAttrs}>${content}</${tag}>`;
+    }
+    /**
+     * Writes text in the buffer to the summary buffer file and empties buffer. Will append by default.
+     *
+     * @param {SummaryWriteOptions} [options] (optional) options for write operation
+     *
+     * @returns {Promise<Summary>} summary instance
+     */
+    write(options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const overwrite = !!(options === null || options === void 0 ? void 0 : options.overwrite);
+            const filePath = yield this.filePath();
+            const writeFunc = overwrite ? writeFile : appendFile;
+            yield writeFunc(filePath, this._buffer, { encoding: 'utf8' });
+            return this.emptyBuffer();
+        });
+    }
+    /**
+     * Clears the summary buffer and wipes the summary file
+     *
+     * @returns {Summary} summary instance
+     */
+    clear() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.emptyBuffer().write({ overwrite: true });
+        });
+    }
+    /**
+     * Returns the current summary buffer as a string
+     *
+     * @returns {string} string of summary buffer
+     */
+    stringify() {
+        return this._buffer;
+    }
+    /**
+     * If the summary buffer is empty
+     *
+     * @returns {boolen} true if the buffer is empty
+     */
+    isEmptyBuffer() {
+        return this._buffer.length === 0;
+    }
+    /**
+     * Resets the summary buffer without writing to summary file
+     *
+     * @returns {Summary} summary instance
+     */
+    emptyBuffer() {
+        this._buffer = '';
+        return this;
+    }
+    /**
+     * Adds raw text to the summary buffer
+     *
+     * @param {string} text content to add
+     * @param {boolean} [addEOL=false] (optional) append an EOL to the raw text (default: false)
+     *
+     * @returns {Summary} summary instance
+     */
+    addRaw(text, addEOL = false) {
+        this._buffer += text;
+        return addEOL ? this.addEOL() : this;
+    }
+    /**
+     * Adds the operating system-specific end-of-line marker to the buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addEOL() {
+        return this.addRaw(os_1.EOL);
+    }
+    /**
+     * Adds an HTML codeblock to the summary buffer
+     *
+     * @param {string} code content to render within fenced code block
+     * @param {string} lang (optional) language to syntax highlight code
+     *
+     * @returns {Summary} summary instance
+     */
+    addCodeBlock(code, lang) {
+        const attrs = Object.assign({}, (lang && { lang }));
+        const element = this.wrap('pre', this.wrap('code', code), attrs);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML list to the summary buffer
+     *
+     * @param {string[]} items list of items to render
+     * @param {boolean} [ordered=false] (optional) if the rendered list should be ordered or not (default: false)
+     *
+     * @returns {Summary} summary instance
+     */
+    addList(items, ordered = false) {
+        const tag = ordered ? 'ol' : 'ul';
+        const listItems = items.map(item => this.wrap('li', item)).join('');
+        const element = this.wrap(tag, listItems);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML table to the summary buffer
+     *
+     * @param {SummaryTableCell[]} rows table rows
+     *
+     * @returns {Summary} summary instance
+     */
+    addTable(rows) {
+        const tableBody = rows
+            .map(row => {
+            const cells = row
+                .map(cell => {
+                if (typeof cell === 'string') {
+                    return this.wrap('td', cell);
+                }
+                const { header, data, colspan, rowspan } = cell;
+                const tag = header ? 'th' : 'td';
+                const attrs = Object.assign(Object.assign({}, (colspan && { colspan })), (rowspan && { rowspan }));
+                return this.wrap(tag, data, attrs);
+            })
+                .join('');
+            return this.wrap('tr', cells);
+        })
+            .join('');
+        const element = this.wrap('table', tableBody);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds a collapsable HTML details element to the summary buffer
+     *
+     * @param {string} label text for the closed state
+     * @param {string} content collapsable content
+     *
+     * @returns {Summary} summary instance
+     */
+    addDetails(label, content) {
+        const element = this.wrap('details', this.wrap('summary', label) + content);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML image tag to the summary buffer
+     *
+     * @param {string} src path to the image you to embed
+     * @param {string} alt text description of the image
+     * @param {SummaryImageOptions} options (optional) addition image attributes
+     *
+     * @returns {Summary} summary instance
+     */
+    addImage(src, alt, options) {
+        const { width, height } = options || {};
+        const attrs = Object.assign(Object.assign({}, (width && { width })), (height && { height }));
+        const element = this.wrap('img', null, Object.assign({ src, alt }, attrs));
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML section heading element
+     *
+     * @param {string} text heading text
+     * @param {number | string} [level=1] (optional) the heading level, default: 1
+     *
+     * @returns {Summary} summary instance
+     */
+    addHeading(text, level) {
+        const tag = `h${level}`;
+        const allowedTag = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)
+            ? tag
+            : 'h1';
+        const element = this.wrap(allowedTag, text);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML thematic break (<hr>) to the summary buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addSeparator() {
+        const element = this.wrap('hr', null);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML line break (<br>) to the summary buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addBreak() {
+        const element = this.wrap('br', null);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML blockquote to the summary buffer
+     *
+     * @param {string} text quote text
+     * @param {string} cite (optional) citation url
+     *
+     * @returns {Summary} summary instance
+     */
+    addQuote(text, cite) {
+        const attrs = Object.assign({}, (cite && { cite }));
+        const element = this.wrap('blockquote', text, attrs);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML anchor tag to the summary buffer
+     *
+     * @param {string} text link text/content
+     * @param {string} href hyperlink
+     *
+     * @returns {Summary} summary instance
+     */
+    addLink(text, href) {
+        const element = this.wrap('a', text, { href });
+        return this.addRaw(element).addEOL();
+    }
+}
+const _summary = new Summary();
+/**
+ * @deprecated use `core.summary`
+ */
+exports.markdownSummary = _summary;
+exports.summary = _summary;
+//# sourceMappingURL=summary.js.map
 
 /***/ }),
 
@@ -729,7 +1101,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getApiBaseUrl = exports.getProxyAgent = exports.getAuthString = void 0;
-const httpClient = __importStar(__nccwpck_require__(9925));
+const httpClient = __importStar(__nccwpck_require__(6255));
 function getAuthString(token, options) {
     if (!token && !options.auth) {
         throw new Error('Parameter token or opts.auth is required');
@@ -814,28 +1186,41 @@ exports.getOctokitOptions = getOctokitOptions;
 
 /***/ }),
 
-/***/ 3702:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ 5526:
+/***/ (function(__unused_webpack_module, exports) {
 
 "use strict";
 
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PersonalAccessTokenCredentialHandler = exports.BearerCredentialHandler = exports.BasicCredentialHandler = void 0;
 class BasicCredentialHandler {
     constructor(username, password) {
         this.username = username;
         this.password = password;
     }
     prepareRequest(options) {
-        options.headers['Authorization'] =
-            'Basic ' +
-                Buffer.from(this.username + ':' + this.password).toString('base64');
+        if (!options.headers) {
+            throw Error('The request has no headers');
+        }
+        options.headers['Authorization'] = `Basic ${Buffer.from(`${this.username}:${this.password}`).toString('base64')}`;
     }
     // This handler cannot handle 401
-    canHandleAuthentication(response) {
+    canHandleAuthentication() {
         return false;
     }
-    handleAuthentication(httpClient, requestInfo, objs) {
-        return null;
+    handleAuthentication() {
+        return __awaiter(this, void 0, void 0, function* () {
+            throw new Error('not implemented');
+        });
     }
 }
 exports.BasicCredentialHandler = BasicCredentialHandler;
@@ -846,14 +1231,19 @@ class BearerCredentialHandler {
     // currently implements pre-authorization
     // TODO: support preAuth = false where it hooks on 401
     prepareRequest(options) {
-        options.headers['Authorization'] = 'Bearer ' + this.token;
+        if (!options.headers) {
+            throw Error('The request has no headers');
+        }
+        options.headers['Authorization'] = `Bearer ${this.token}`;
     }
     // This handler cannot handle 401
-    canHandleAuthentication(response) {
+    canHandleAuthentication() {
         return false;
     }
-    handleAuthentication(httpClient, requestInfo, objs) {
-        return null;
+    handleAuthentication() {
+        return __awaiter(this, void 0, void 0, function* () {
+            throw new Error('not implemented');
+        });
     }
 }
 exports.BearerCredentialHandler = BearerCredentialHandler;
@@ -864,32 +1254,66 @@ class PersonalAccessTokenCredentialHandler {
     // currently implements pre-authorization
     // TODO: support preAuth = false where it hooks on 401
     prepareRequest(options) {
-        options.headers['Authorization'] =
-            'Basic ' + Buffer.from('PAT:' + this.token).toString('base64');
+        if (!options.headers) {
+            throw Error('The request has no headers');
+        }
+        options.headers['Authorization'] = `Basic ${Buffer.from(`PAT:${this.token}`).toString('base64')}`;
     }
     // This handler cannot handle 401
-    canHandleAuthentication(response) {
+    canHandleAuthentication() {
         return false;
     }
-    handleAuthentication(httpClient, requestInfo, objs) {
-        return null;
+    handleAuthentication() {
+        return __awaiter(this, void 0, void 0, function* () {
+            throw new Error('not implemented');
+        });
     }
 }
 exports.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHandler;
-
+//# sourceMappingURL=auth.js.map
 
 /***/ }),
 
-/***/ 9925:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ 6255:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const http = __nccwpck_require__(3685);
-const https = __nccwpck_require__(5687);
-const pm = __nccwpck_require__(6443);
-let tunnel;
+exports.HttpClient = exports.isHttps = exports.HttpClientResponse = exports.HttpClientError = exports.getProxyUrl = exports.MediaTypes = exports.Headers = exports.HttpCodes = void 0;
+const http = __importStar(__nccwpck_require__(3685));
+const https = __importStar(__nccwpck_require__(5687));
+const pm = __importStar(__nccwpck_require__(9835));
+const tunnel = __importStar(__nccwpck_require__(4294));
 var HttpCodes;
 (function (HttpCodes) {
     HttpCodes[HttpCodes["OK"] = 200] = "OK";
@@ -934,7 +1358,7 @@ var MediaTypes;
  * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
  */
 function getProxyUrl(serverUrl) {
-    let proxyUrl = pm.getProxyUrl(new URL(serverUrl));
+    const proxyUrl = pm.getProxyUrl(new URL(serverUrl));
     return proxyUrl ? proxyUrl.href : '';
 }
 exports.getProxyUrl = getProxyUrl;
@@ -967,20 +1391,22 @@ class HttpClientResponse {
         this.message = message;
     }
     readBody() {
-        return new Promise(async (resolve, reject) => {
-            let output = Buffer.alloc(0);
-            this.message.on('data', (chunk) => {
-                output = Buffer.concat([output, chunk]);
-            });
-            this.message.on('end', () => {
-                resolve(output.toString());
-            });
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+                let output = Buffer.alloc(0);
+                this.message.on('data', (chunk) => {
+                    output = Buffer.concat([output, chunk]);
+                });
+                this.message.on('end', () => {
+                    resolve(output.toString());
+                });
+            }));
         });
     }
 }
 exports.HttpClientResponse = HttpClientResponse;
 function isHttps(requestUrl) {
-    let parsedUrl = new URL(requestUrl);
+    const parsedUrl = new URL(requestUrl);
     return parsedUrl.protocol === 'https:';
 }
 exports.isHttps = isHttps;
@@ -1023,141 +1449,169 @@ class HttpClient {
         }
     }
     options(requestUrl, additionalHeaders) {
-        return this.request('OPTIONS', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('OPTIONS', requestUrl, null, additionalHeaders || {});
+        });
     }
     get(requestUrl, additionalHeaders) {
-        return this.request('GET', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('GET', requestUrl, null, additionalHeaders || {});
+        });
     }
     del(requestUrl, additionalHeaders) {
-        return this.request('DELETE', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('DELETE', requestUrl, null, additionalHeaders || {});
+        });
     }
     post(requestUrl, data, additionalHeaders) {
-        return this.request('POST', requestUrl, data, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('POST', requestUrl, data, additionalHeaders || {});
+        });
     }
     patch(requestUrl, data, additionalHeaders) {
-        return this.request('PATCH', requestUrl, data, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('PATCH', requestUrl, data, additionalHeaders || {});
+        });
     }
     put(requestUrl, data, additionalHeaders) {
-        return this.request('PUT', requestUrl, data, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('PUT', requestUrl, data, additionalHeaders || {});
+        });
     }
     head(requestUrl, additionalHeaders) {
-        return this.request('HEAD', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('HEAD', requestUrl, null, additionalHeaders || {});
+        });
     }
     sendStream(verb, requestUrl, stream, additionalHeaders) {
-        return this.request(verb, requestUrl, stream, additionalHeaders);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request(verb, requestUrl, stream, additionalHeaders);
+        });
     }
     /**
      * Gets a typed object from an endpoint
      * Be aware that not found returns a null.  Other errors (4xx, 5xx) reject the promise
      */
-    async getJson(requestUrl, additionalHeaders = {}) {
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        let res = await this.get(requestUrl, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    getJson(requestUrl, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            const res = yield this.get(requestUrl, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
-    async postJson(requestUrl, obj, additionalHeaders = {}) {
-        let data = JSON.stringify(obj, null, 2);
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-        let res = await this.post(requestUrl, data, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    postJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.post(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
-    async putJson(requestUrl, obj, additionalHeaders = {}) {
-        let data = JSON.stringify(obj, null, 2);
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-        let res = await this.put(requestUrl, data, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    putJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.put(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
-    async patchJson(requestUrl, obj, additionalHeaders = {}) {
-        let data = JSON.stringify(obj, null, 2);
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-        let res = await this.patch(requestUrl, data, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    patchJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.patch(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
     /**
      * Makes a raw http request.
      * All other methods such as get, post, patch, and request ultimately call this.
      * Prefer get, del, post and patch
      */
-    async request(verb, requestUrl, data, headers) {
-        if (this._disposed) {
-            throw new Error('Client has already been disposed.');
-        }
-        let parsedUrl = new URL(requestUrl);
-        let info = this._prepareRequest(verb, parsedUrl, headers);
-        // Only perform retries on reads since writes may not be idempotent.
-        let maxTries = this._allowRetries && RetryableHttpVerbs.indexOf(verb) != -1
-            ? this._maxRetries + 1
-            : 1;
-        let numTries = 0;
-        let response;
-        while (numTries < maxTries) {
-            response = await this.requestRaw(info, data);
-            // Check if it's an authentication challenge
-            if (response &&
-                response.message &&
-                response.message.statusCode === HttpCodes.Unauthorized) {
-                let authenticationHandler;
-                for (let i = 0; i < this.handlers.length; i++) {
-                    if (this.handlers[i].canHandleAuthentication(response)) {
-                        authenticationHandler = this.handlers[i];
-                        break;
-                    }
-                }
-                if (authenticationHandler) {
-                    return authenticationHandler.handleAuthentication(this, info, data);
-                }
-                else {
-                    // We have received an unauthorized response but have no handlers to handle it.
-                    // Let the response return to the caller.
-                    return response;
-                }
+    request(verb, requestUrl, data, headers) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._disposed) {
+                throw new Error('Client has already been disposed.');
             }
-            let redirectsRemaining = this._maxRedirects;
-            while (HttpRedirectCodes.indexOf(response.message.statusCode) != -1 &&
-                this._allowRedirects &&
-                redirectsRemaining > 0) {
-                const redirectUrl = response.message.headers['location'];
-                if (!redirectUrl) {
-                    // if there's no location to redirect to, we won't
-                    break;
-                }
-                let parsedRedirectUrl = new URL(redirectUrl);
-                if (parsedUrl.protocol == 'https:' &&
-                    parsedUrl.protocol != parsedRedirectUrl.protocol &&
-                    !this._allowRedirectDowngrade) {
-                    throw new Error('Redirect from HTTPS to HTTP protocol. This downgrade is not allowed for security reasons. If you want to allow this behavior, set the allowRedirectDowngrade option to true.');
-                }
-                // we need to finish reading the response before reassigning response
-                // which will leak the open socket.
-                await response.readBody();
-                // strip authorization header if redirected to a different hostname
-                if (parsedRedirectUrl.hostname !== parsedUrl.hostname) {
-                    for (let header in headers) {
-                        // header names are case insensitive
-                        if (header.toLowerCase() === 'authorization') {
-                            delete headers[header];
+            const parsedUrl = new URL(requestUrl);
+            let info = this._prepareRequest(verb, parsedUrl, headers);
+            // Only perform retries on reads since writes may not be idempotent.
+            const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb)
+                ? this._maxRetries + 1
+                : 1;
+            let numTries = 0;
+            let response;
+            do {
+                response = yield this.requestRaw(info, data);
+                // Check if it's an authentication challenge
+                if (response &&
+                    response.message &&
+                    response.message.statusCode === HttpCodes.Unauthorized) {
+                    let authenticationHandler;
+                    for (const handler of this.handlers) {
+                        if (handler.canHandleAuthentication(response)) {
+                            authenticationHandler = handler;
+                            break;
                         }
                     }
+                    if (authenticationHandler) {
+                        return authenticationHandler.handleAuthentication(this, info, data);
+                    }
+                    else {
+                        // We have received an unauthorized response but have no handlers to handle it.
+                        // Let the response return to the caller.
+                        return response;
+                    }
                 }
-                // let's make the request with the new redirectUrl
-                info = this._prepareRequest(verb, parsedRedirectUrl, headers);
-                response = await this.requestRaw(info, data);
-                redirectsRemaining--;
-            }
-            if (HttpResponseRetryCodes.indexOf(response.message.statusCode) == -1) {
-                // If not a retry code, return immediately instead of retrying
-                return response;
-            }
-            numTries += 1;
-            if (numTries < maxTries) {
-                await response.readBody();
-                await this._performExponentialBackoff(numTries);
-            }
-        }
-        return response;
+                let redirectsRemaining = this._maxRedirects;
+                while (response.message.statusCode &&
+                    HttpRedirectCodes.includes(response.message.statusCode) &&
+                    this._allowRedirects &&
+                    redirectsRemaining > 0) {
+                    const redirectUrl = response.message.headers['location'];
+                    if (!redirectUrl) {
+                        // if there's no location to redirect to, we won't
+                        break;
+                    }
+                    const parsedRedirectUrl = new URL(redirectUrl);
+                    if (parsedUrl.protocol === 'https:' &&
+                        parsedUrl.protocol !== parsedRedirectUrl.protocol &&
+                        !this._allowRedirectDowngrade) {
+                        throw new Error('Redirect from HTTPS to HTTP protocol. This downgrade is not allowed for security reasons. If you want to allow this behavior, set the allowRedirectDowngrade option to true.');
+                    }
+                    // we need to finish reading the response before reassigning response
+                    // which will leak the open socket.
+                    yield response.readBody();
+                    // strip authorization header if redirected to a different hostname
+                    if (parsedRedirectUrl.hostname !== parsedUrl.hostname) {
+                        for (const header in headers) {
+                            // header names are case insensitive
+                            if (header.toLowerCase() === 'authorization') {
+                                delete headers[header];
+                            }
+                        }
+                    }
+                    // let's make the request with the new redirectUrl
+                    info = this._prepareRequest(verb, parsedRedirectUrl, headers);
+                    response = yield this.requestRaw(info, data);
+                    redirectsRemaining--;
+                }
+                if (!response.message.statusCode ||
+                    !HttpResponseRetryCodes.includes(response.message.statusCode)) {
+                    // If not a retry code, return immediately instead of retrying
+                    return response;
+                }
+                numTries += 1;
+                if (numTries < maxTries) {
+                    yield response.readBody();
+                    yield this._performExponentialBackoff(numTries);
+                }
+            } while (numTries < maxTries);
+            return response;
+        });
     }
     /**
      * Needs to be called if keepAlive is set to true in request options.
@@ -1174,14 +1628,22 @@ class HttpClient {
      * @param data
      */
     requestRaw(info, data) {
-        return new Promise((resolve, reject) => {
-            let callbackForResult = function (err, res) {
-                if (err) {
-                    reject(err);
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                function callbackForResult(err, res) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else if (!res) {
+                        // If `err` is not passed, then `res` must be passed.
+                        reject(new Error('Unknown error'));
+                    }
+                    else {
+                        resolve(res);
+                    }
                 }
-                resolve(res);
-            };
-            this.requestRawWithCallback(info, data, callbackForResult);
+                this.requestRawWithCallback(info, data, callbackForResult);
+            });
         });
     }
     /**
@@ -1191,21 +1653,24 @@ class HttpClient {
      * @param onResult
      */
     requestRawWithCallback(info, data, onResult) {
-        let socket;
         if (typeof data === 'string') {
+            if (!info.options.headers) {
+                info.options.headers = {};
+            }
             info.options.headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
         }
         let callbackCalled = false;
-        let handleResult = (err, res) => {
+        function handleResult(err, res) {
             if (!callbackCalled) {
                 callbackCalled = true;
                 onResult(err, res);
             }
-        };
-        let req = info.httpModule.request(info.options, (msg) => {
-            let res = new HttpClientResponse(msg);
-            handleResult(null, res);
+        }
+        const req = info.httpModule.request(info.options, (msg) => {
+            const res = new HttpClientResponse(msg);
+            handleResult(undefined, res);
         });
+        let socket;
         req.on('socket', sock => {
             socket = sock;
         });
@@ -1214,12 +1679,12 @@ class HttpClient {
             if (socket) {
                 socket.end();
             }
-            handleResult(new Error('Request timeout: ' + info.options.path), null);
+            handleResult(new Error(`Request timeout: ${info.options.path}`));
         });
         req.on('error', function (err) {
             // err has statusCode property
             // res should have headers
-            handleResult(err, null);
+            handleResult(err);
         });
         if (data && typeof data === 'string') {
             req.write(data, 'utf8');
@@ -1240,7 +1705,7 @@ class HttpClient {
      * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
      */
     getAgent(serverUrl) {
-        let parsedUrl = new URL(serverUrl);
+        const parsedUrl = new URL(serverUrl);
         return this._getAgent(parsedUrl);
     }
     _prepareRequest(method, requestUrl, headers) {
@@ -1264,21 +1729,19 @@ class HttpClient {
         info.options.agent = this._getAgent(info.parsedUrl);
         // gives handlers an opportunity to participate
         if (this.handlers) {
-            this.handlers.forEach(handler => {
+            for (const handler of this.handlers) {
                 handler.prepareRequest(info.options);
-            });
+            }
         }
         return info;
     }
     _mergeHeaders(headers) {
-        const lowercaseKeys = obj => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
         if (this.requestOptions && this.requestOptions.headers) {
-            return Object.assign({}, lowercaseKeys(this.requestOptions.headers), lowercaseKeys(headers));
+            return Object.assign({}, lowercaseKeys(this.requestOptions.headers), lowercaseKeys(headers || {}));
         }
         return lowercaseKeys(headers || {});
     }
     _getExistingOrDefaultHeader(additionalHeaders, header, _default) {
-        const lowercaseKeys = obj => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
         let clientHeader;
         if (this.requestOptions && this.requestOptions.headers) {
             clientHeader = lowercaseKeys(this.requestOptions.headers)[header];
@@ -1287,8 +1750,8 @@ class HttpClient {
     }
     _getAgent(parsedUrl) {
         let agent;
-        let proxyUrl = pm.getProxyUrl(parsedUrl);
-        let useProxy = proxyUrl && proxyUrl.hostname;
+        const proxyUrl = pm.getProxyUrl(parsedUrl);
+        const useProxy = proxyUrl && proxyUrl.hostname;
         if (this._keepAlive && useProxy) {
             agent = this._proxyAgent;
         }
@@ -1296,29 +1759,22 @@ class HttpClient {
             agent = this._agent;
         }
         // if agent is already assigned use that agent.
-        if (!!agent) {
+        if (agent) {
             return agent;
         }
         const usingSsl = parsedUrl.protocol === 'https:';
         let maxSockets = 100;
-        if (!!this.requestOptions) {
+        if (this.requestOptions) {
             maxSockets = this.requestOptions.maxSockets || http.globalAgent.maxSockets;
         }
-        if (useProxy) {
-            // If using proxy, need tunnel
-            if (!tunnel) {
-                tunnel = __nccwpck_require__(4294);
-            }
+        // This is `useProxy` again, but we need to check `proxyURl` directly for TypeScripts's flow analysis.
+        if (proxyUrl && proxyUrl.hostname) {
             const agentOptions = {
-                maxSockets: maxSockets,
+                maxSockets,
                 keepAlive: this._keepAlive,
-                proxy: {
-                    ...((proxyUrl.username || proxyUrl.password) && {
-                        proxyAuth: `${proxyUrl.username}:${proxyUrl.password}`
-                    }),
-                    host: proxyUrl.hostname,
-                    port: proxyUrl.port
-                }
+                proxy: Object.assign(Object.assign({}, ((proxyUrl.username || proxyUrl.password) && {
+                    proxyAuth: `${proxyUrl.username}:${proxyUrl.password}`
+                })), { host: proxyUrl.hostname, port: proxyUrl.port })
             };
             let tunnelAgent;
             const overHttps = proxyUrl.protocol === 'https:';
@@ -1333,7 +1789,7 @@ class HttpClient {
         }
         // if reusing agent across request and tunneling agent isn't assigned create a new agent
         if (this._keepAlive && !agent) {
-            const options = { keepAlive: this._keepAlive, maxSockets: maxSockets };
+            const options = { keepAlive: this._keepAlive, maxSockets };
             agent = usingSsl ? new https.Agent(options) : new http.Agent(options);
             this._agent = agent;
         }
@@ -1352,109 +1808,117 @@ class HttpClient {
         return agent;
     }
     _performExponentialBackoff(retryNumber) {
-        retryNumber = Math.min(ExponentialBackoffCeiling, retryNumber);
-        const ms = ExponentialBackoffTimeSlice * Math.pow(2, retryNumber);
-        return new Promise(resolve => setTimeout(() => resolve(), ms));
+        return __awaiter(this, void 0, void 0, function* () {
+            retryNumber = Math.min(ExponentialBackoffCeiling, retryNumber);
+            const ms = ExponentialBackoffTimeSlice * Math.pow(2, retryNumber);
+            return new Promise(resolve => setTimeout(() => resolve(), ms));
+        });
     }
-    static dateTimeDeserializer(key, value) {
-        if (typeof value === 'string') {
-            let a = new Date(value);
-            if (!isNaN(a.valueOf())) {
-                return a;
-            }
-        }
-        return value;
-    }
-    async _processResponse(res, options) {
-        return new Promise(async (resolve, reject) => {
-            const statusCode = res.message.statusCode;
-            const response = {
-                statusCode: statusCode,
-                result: null,
-                headers: {}
-            };
-            // not found leads to null obj returned
-            if (statusCode == HttpCodes.NotFound) {
-                resolve(response);
-            }
-            let obj;
-            let contents;
-            // get the result from the body
-            try {
-                contents = await res.readBody();
-                if (contents && contents.length > 0) {
-                    if (options && options.deserializeDates) {
-                        obj = JSON.parse(contents, HttpClient.dateTimeDeserializer);
+    _processResponse(res, options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                const statusCode = res.message.statusCode || 0;
+                const response = {
+                    statusCode,
+                    result: null,
+                    headers: {}
+                };
+                // not found leads to null obj returned
+                if (statusCode === HttpCodes.NotFound) {
+                    resolve(response);
+                }
+                // get the result from the body
+                function dateTimeDeserializer(key, value) {
+                    if (typeof value === 'string') {
+                        const a = new Date(value);
+                        if (!isNaN(a.valueOf())) {
+                            return a;
+                        }
+                    }
+                    return value;
+                }
+                let obj;
+                let contents;
+                try {
+                    contents = yield res.readBody();
+                    if (contents && contents.length > 0) {
+                        if (options && options.deserializeDates) {
+                            obj = JSON.parse(contents, dateTimeDeserializer);
+                        }
+                        else {
+                            obj = JSON.parse(contents);
+                        }
+                        response.result = obj;
+                    }
+                    response.headers = res.message.headers;
+                }
+                catch (err) {
+                    // Invalid resource (contents not json);  leaving result obj null
+                }
+                // note that 3xx redirects are handled by the http layer.
+                if (statusCode > 299) {
+                    let msg;
+                    // if exception/error in body, attempt to get better error
+                    if (obj && obj.message) {
+                        msg = obj.message;
+                    }
+                    else if (contents && contents.length > 0) {
+                        // it may be the case that the exception is in the body message as string
+                        msg = contents;
                     }
                     else {
-                        obj = JSON.parse(contents);
+                        msg = `Failed request: (${statusCode})`;
                     }
-                    response.result = obj;
-                }
-                response.headers = res.message.headers;
-            }
-            catch (err) {
-                // Invalid resource (contents not json);  leaving result obj null
-            }
-            // note that 3xx redirects are handled by the http layer.
-            if (statusCode > 299) {
-                let msg;
-                // if exception/error in body, attempt to get better error
-                if (obj && obj.message) {
-                    msg = obj.message;
-                }
-                else if (contents && contents.length > 0) {
-                    // it may be the case that the exception is in the body message as string
-                    msg = contents;
+                    const err = new HttpClientError(msg, statusCode);
+                    err.result = response.result;
+                    reject(err);
                 }
                 else {
-                    msg = 'Failed request: (' + statusCode + ')';
+                    resolve(response);
                 }
-                let err = new HttpClientError(msg, statusCode);
-                err.result = response.result;
-                reject(err);
-            }
-            else {
-                resolve(response);
-            }
+            }));
         });
     }
 }
 exports.HttpClient = HttpClient;
-
+const lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
+//# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 6443:
+/***/ 9835:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.checkBypass = exports.getProxyUrl = void 0;
 function getProxyUrl(reqUrl) {
-    let usingSsl = reqUrl.protocol === 'https:';
-    let proxyUrl;
+    const usingSsl = reqUrl.protocol === 'https:';
     if (checkBypass(reqUrl)) {
-        return proxyUrl;
+        return undefined;
     }
-    let proxyVar;
-    if (usingSsl) {
-        proxyVar = process.env['https_proxy'] || process.env['HTTPS_PROXY'];
+    const proxyVar = (() => {
+        if (usingSsl) {
+            return process.env['https_proxy'] || process.env['HTTPS_PROXY'];
+        }
+        else {
+            return process.env['http_proxy'] || process.env['HTTP_PROXY'];
+        }
+    })();
+    if (proxyVar) {
+        return new URL(proxyVar);
     }
     else {
-        proxyVar = process.env['http_proxy'] || process.env['HTTP_PROXY'];
+        return undefined;
     }
-    if (proxyVar) {
-        proxyUrl = new URL(proxyVar);
-    }
-    return proxyUrl;
 }
 exports.getProxyUrl = getProxyUrl;
 function checkBypass(reqUrl) {
     if (!reqUrl.hostname) {
         return false;
     }
-    let noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
+    const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
     if (!noProxy) {
         return false;
     }
@@ -1470,12 +1934,12 @@ function checkBypass(reqUrl) {
         reqPort = 443;
     }
     // Format the request hostname and hostname with port
-    let upperReqHosts = [reqUrl.hostname.toUpperCase()];
+    const upperReqHosts = [reqUrl.hostname.toUpperCase()];
     if (typeof reqPort === 'number') {
         upperReqHosts.push(`${upperReqHosts[0]}:${reqPort}`);
     }
     // Compare request host against noproxy
-    for (let upperNoProxyItem of noProxy
+    for (const upperNoProxyItem of noProxy
         .split(',')
         .map(x => x.trim().toUpperCase())
         .filter(x => x)) {
@@ -1486,7 +1950,7 @@ function checkBypass(reqUrl) {
     return false;
 }
 exports.checkBypass = checkBypass;
-
+//# sourceMappingURL=proxy.js.map
 
 /***/ }),
 
@@ -8299,325 +8763,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 6144:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseNotesContents = exports.parseCODEOWNERS = void 0;
-const core_1 = __nccwpck_require__(2186);
-const github_1 = __nccwpck_require__(5438);
-// Template placeholders for README
-let CONTRIBUTORS = '';
-let DOWNLOADS = '';
-let UNIT_CODE = '';
-let UNIT_NAME = '';
-let UNIT_COORDINATOR = '';
-let SEMESTER = '';
-let YEAR = '';
-let CONTENTS = '';
-let WHICH_NOTES = '';
-let COPYRIGHT = '';
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Get client and context
-        const client = (0, github_1.getOctokit)((0, core_1.getInput)('GITHUB_TOKEN', { required: true }));
-        const levelMacro = (0, core_1.getInput)('LEVEL_MACRO', { required: true });
-        let LectureNotesContents = '';
-        let ExamNotesContents = '';
-        let CodeOwnersContents = '';
-        let LN = true;
-        let EN = true;
-        // Look for lecture notes/exam notes files
-        yield client
-            .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.payload.repository.owner.name,
-            repo: github_1.context.payload.repository.name,
-            path: `${github_1.context.payload.repository.name} Lecture Notes.tex`,
-            ref: github_1.context.sha
-        })
-            .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
-                LectureNotesContents = buffer.toString();
-            }
-        })
-            .catch((onrejected) => {
-            LN = false;
-            (0, core_1.warning)(`No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Lecture Notes.tex\``);
-        });
-        yield client
-            .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.payload.repository.owner.name,
-            repo: github_1.context.payload.repository.name,
-            path: `${github_1.context.payload.repository.name} Exam Notes.tex`,
-            ref: github_1.context.sha
-        })
-            .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
-                ExamNotesContents = buffer.toString();
-            }
-        })
-            .catch((onrejected) => {
-            EN = false;
-            (0, core_1.warning)(`No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${github_1.context.payload.repository.name} Exam Notes.tex\``);
-        });
-        // Try to get CODEOWNERS file
-        yield client
-            .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.payload.repository.owner.name,
-            repo: github_1.context.payload.repository.name,
-            path: 'CODEOWNERS',
-            ref: github_1.context.sha
-        })
-            .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
-                CodeOwnersContents = buffer.toString();
-            }
-        }).catch((onrejected) => {
-            return (0, core_1.setFailed)(`No CODEOWNERS file was provided in repository.`);
-        });
-        if (!LN && !EN) {
-            return (0, core_1.setFailed)('No source files were found, ending workflow.');
-        }
-        // Set variables for README template
-        // UNIT_CODE
-        UNIT_CODE = github_1.context.payload.repository.name;
-        // CONTRIBUTORS
-        CONTRIBUTORS = parseCODEOWNERS(CodeOwnersContents);
-        // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
-        if (LN && EN) {
-            WHICH_NOTES = '**lecture notes** and **exam notes**';
-            parseNotesContents(LectureNotesContents, levelMacro);
-            DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)\n\nExam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
-        }
-        else if (LN) {
-            WHICH_NOTES = '**lecture notes**';
-            parseNotesContents(LectureNotesContents, levelMacro);
-            DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)`;
-        }
-        else if (EN) {
-            WHICH_NOTES = '**exam notes**';
-            parseNotesContents(ExamNotesContents, levelMacro);
-            DOWNLOADS = `Exam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
-        }
-        // Combine all variables
-        let output = `# ${UNIT_CODE} - ${UNIT_NAME}
-
-## ${UNIT_COORDINATOR}
-
-### Semester ${SEMESTER}, ${YEAR}
-
----
-
-## Downloads
-
-${DOWNLOADS}
-
-${CONTRIBUTORS}---
-
-This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
-
-${CONTENTS}${COPYRIGHT}`;
-        // Output to README.md
-        // Check if file exists
-        let requestOptions = {
-            owner: github_1.context.payload.repository.owner.name,
-            repo: github_1.context.payload.repository.name,
-            path: 'README.md',
-            message: 'README CI',
-            content: Buffer.from(output).toString('base64')
-        };
-        yield client
-            .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: github_1.context.payload.repository.owner.name,
-            repo: github_1.context.payload.repository.name,
-            path: 'README.md',
-            ref: github_1.context.sha
-        })
-            .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                requestOptions['sha'] = onfulfilled.data.sha;
-            }
-        })
-            .catch(() => { });
-        yield client
-            .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
-            .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                return (0, core_1.info)('Successfully updated README.md.');
-            }
-            else if (onfulfilled.status == 201) {
-                return (0, core_1.info)('Successfully created README.md.');
-            }
-        })
-            .catch((onrejected) => {
-            return (0, core_1.setFailed)(onrejected);
-        });
-    });
-}
-function parseCODEOWNERS(s) {
-    let output = '';
-    const lines = s.split(/\r?\n/);
-    let usernames = [];
-    lines.forEach((v, i) => {
-        v = v.trim();
-        // Skip if comment
-        if (v.startsWith('%')) {
-            return;
-        }
-        let ignoreComments = v.split('#')[0];
-        let temp_usernames = ignoreComments.match(/\@([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})/gi);
-        if (temp_usernames == null)
-            return;
-        temp_usernames.forEach((u) => {
-            usernames.push(u.slice(1));
-        });
-    });
-    const usernamesSet = new Set(usernames);
-    let usernamesArray = [...usernamesSet];
-    usernamesArray = usernamesArray.slice(1);
-    if (usernamesArray.length > 1) {
-        let usernamesText = '';
-        usernamesArray.forEach((u, i) => {
-            if (i == usernamesArray.length - 1) {
-                usernamesText += `and [${u}](https://github.com/${u})`;
-            }
-            else {
-                if (usernamesArray.length == 2) {
-                    usernamesText += `[${u}](https://github.com/${u}) `;
-                }
-                else {
-                    usernamesText += `[${u}](https://github.com/${u}), `;
-                }
-            }
-        });
-        output = `Thanks to ${usernamesText} for the collaboration.\n\n`;
-    }
-    else if (usernamesArray.length == 1) {
-        output = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
-    }
-    return output;
-}
-exports.parseCODEOWNERS = parseCODEOWNERS;
-function parseNotesContents(s, levelMacro) {
-    const lines = s.split(/\r?\n/);
-    let copyrightVersion = '';
-    let copyrightModifier = '';
-    let sections = new Array();
-    lines.forEach((v) => {
-        v = v.trim();
-        // Skip if comment
-        if (v.startsWith('%')) {
-            return;
-        }
-        // Find other macros
-        if (v.startsWith('\\newcommand{\\unitName}')) {
-            UNIT_NAME = v.slice(23).split('}')[0];
-        }
-        else if (v.startsWith('\\newcommand{\\unitTime}')) {
-            let time = v.slice(23).split('}')[0];
-            SEMESTER = time[9];
-            YEAR = time.slice(12);
-        }
-        else if (v.startsWith('\\newcommand{\\unitCoordinator}')) {
-            UNIT_COORDINATOR = v.slice(30).split('}')[0];
-        }
-        else if (v.startsWith('modifier={')) {
-            copyrightModifier = v.slice(10).split('}')[0];
-        }
-        else if (v.startsWith('version={')) {
-            copyrightVersion = v.slice(9).split('}')[0];
-        }
-        else if (v.startsWith(`\\${levelMacro}{`)) {
-            sections.push(v.slice(levelMacro.length + 2).split('}')[0]);
-        }
-    });
-    if (copyrightModifier != '' && copyrightVersion != '') {
-        COPYRIGHT = setCopyrightInformation(copyrightModifier, copyrightVersion);
-    }
-    else if (copyrightModifier != '' && copyrightVersion == '') {
-        COPYRIGHT = setCopyrightInformation(copyrightModifier, '4.0');
-    }
-    else if (copyrightModifier == '' && copyrightVersion != '') {
-        (0, core_1.warning)('No copyright modifier was set.');
-        COPYRIGHT = '';
-    }
-    else {
-        (0, core_1.warning)('No copyright license was set.');
-        COPYRIGHT = '';
-    }
-    if (sections.length > 0) {
-        CONTENTS = formatContents(sections);
-    }
-    else {
-        CONTENTS = '';
-    }
-}
-exports.parseNotesContents = parseNotesContents;
-function formatContents(sections) {
-    let output = '*The contents of the lecture notes are described below.*\n\n---\n\n## Contents\n\n';
-    sections.forEach((s, i) => {
-        output += `${i + 1}. ${s}\n`;
-    });
-    output += '\n';
-    return output;
-}
-function setCopyrightInformation(copyrightModifier, copyrightVersion) {
-    copyrightModifier = copyrightModifier.toLowerCase();
-    let modifierText = '';
-    let versionText = '';
-    let licenseURL = `http://creativecommons.org/licenses/${copyrightModifier}/${copyrightVersion}/`;
-    let iconBadge = "";
-    switch (copyrightVersion) {
-        case '1.0':
-            versionText = '1.0 Generic';
-        case '2.0':
-            versionText = '2.0 Generic';
-        case '3.0':
-            versionText = '3.0 Unported';
-        case '4.0':
-            versionText = '4.0 International';
-    }
-    switch (copyrightModifier) {
-        case 'by':
-            modifierText = 'Attribution';
-            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-by.svg)](${licenseURL})`;
-        case 'by-nd':
-            modifierText = 'Attribution-NoDerivatives';
-            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-by-nd.svg)](${licenseURL})`;
-        case 'by-nc':
-            modifierText = 'Attribution-NonCommercial';
-            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-nc.svg)](${licenseURL})`;
-        case 'by-nc-nd':
-            modifierText = 'Attribution-NonCommercial-NoDerivatives';
-            iconBadge = `<a href="https://forthebadge.com"><svg  xmlns="http://www.w3.org/2000/svg" width="270.02" height="35" viewBox="0 0 270.02 35"><rect class="svg__rect" x="0" y="0" width="190.57000000000002" height="35" fill="#B0AEAF"></rect><rect class="svg__rect" x="188.57000000000002" y="0" width="81.44999999999999" height="35" fill="#1C1C1D"></rect><path class="svg__text" d="M13.95 18.19L13.95 18.19L13.95 17.39Q13.95 16.19 14.38 15.27Q14.80 14.35 15.60 13.85Q16.40 13.35 17.45 13.35L17.45 13.35Q18.86 13.35 19.73 14.12Q20.59 14.89 20.73 16.29L20.73 16.29L19.25 16.29Q19.14 15.37 18.71 14.96Q18.28 14.55 17.45 14.55L17.45 14.55Q16.48 14.55 15.97 15.26Q15.45 15.96 15.44 17.33L15.44 17.33L15.44 18.09Q15.44 19.47 15.93 20.20Q16.43 20.92 17.38 20.92L17.38 20.92Q18.25 20.92 18.69 20.53Q19.13 20.14 19.25 19.22L19.25 19.22L20.73 19.22Q20.60 20.59 19.72 21.35Q18.84 22.12 17.38 22.12L17.38 22.12Q16.36 22.12 15.59 21.63Q14.81 21.15 14.39 20.26Q13.97 19.37 13.95 18.19ZM26.52 22L25.04 22L25.04 13.47L28.04 13.47Q29.52 13.47 30.32 14.13Q31.12 14.79 31.12 16.05L31.12 16.05Q31.12 16.90 30.71 17.48Q30.30 18.06 29.56 18.37L29.56 18.37L31.47 21.92L31.47 22L29.89 22L28.17 18.71L26.52 18.71L26.52 22ZM26.52 14.66L26.52 17.52L28.05 17.52Q28.80 17.52 29.22 17.15Q29.64 16.77 29.64 16.11L29.64 16.11Q29.64 15.43 29.25 15.05Q28.86 14.68 28.09 14.66L28.09 14.66L26.52 14.66ZM41.09 22L35.52 22L35.52 13.47L41.05 13.47L41.05 14.66L37.00 14.66L37.00 17.02L40.50 17.02L40.50 18.19L37.00 18.19L37.00 20.82L41.09 20.82L41.09 22ZM46.07 22L44.53 22L47.75 13.47L49.08 13.47L52.31 22L50.76 22L50.06 20.01L46.76 20.01L46.07 22ZM48.41 15.28L47.18 18.82L49.65 18.82L48.41 15.28ZM57.95 14.66L55.31 14.66L55.31 13.47L62.08 13.47L62.08 14.66L59.42 14.66L59.42 22L57.95 22L57.95 14.66ZM67.40 22L65.92 22L65.92 13.47L67.40 13.47L67.40 22ZM74.50 22L71.45 13.47L73.07 13.47L75.21 20.14L77.38 13.47L79.01 13.47L75.94 22L74.50 22ZM88.54 22L82.96 22L82.96 13.47L88.50 13.47L88.50 14.66L84.44 14.66L84.44 17.02L87.95 17.02L87.95 18.19L84.44 18.19L84.44 20.82L88.54 20.82L88.54 22ZM98.44 18.19L98.44 18.19L98.44 17.39Q98.44 16.19 98.87 15.27Q99.30 14.35 100.10 13.85Q100.89 13.35 101.94 13.35L101.94 13.35Q103.36 13.35 104.22 14.12Q105.08 14.89 105.22 16.29L105.22 16.29L103.74 16.29Q103.64 15.37 103.21 14.96Q102.78 14.55 101.94 14.55L101.94 14.55Q100.98 14.55 100.46 15.26Q99.94 15.96 99.93 17.33L99.93 17.33L99.93 18.09Q99.93 19.47 100.42 20.20Q100.92 20.92 101.87 20.92L101.87 20.92Q102.75 20.92 103.19 20.53Q103.63 20.14 103.74 19.22L103.74 19.22L105.22 19.22Q105.09 20.59 104.21 21.35Q103.33 22.12 101.87 22.12L101.87 22.12Q100.85 22.12 100.08 21.63Q99.30 21.15 98.88 20.26Q98.46 19.37 98.44 18.19ZM109.26 18.00L109.26 18.00L109.26 17.52Q109.26 16.28 109.70 15.32Q110.15 14.37 110.95 13.86Q111.76 13.35 112.80 13.35Q113.84 13.35 114.65 13.85Q115.46 14.35 115.89 15.29Q116.33 16.23 116.34 17.48L116.34 17.48L116.34 17.96Q116.34 19.21 115.91 20.16Q115.47 21.10 114.67 21.61Q113.86 22.12 112.81 22.12L112.81 22.12Q111.78 22.12 110.96 21.61Q110.15 21.10 109.71 20.17Q109.27 19.23 109.26 18.00ZM110.74 17.46L110.74 17.96Q110.74 19.36 111.29 20.13Q111.84 20.90 112.81 20.90L112.81 20.90Q113.80 20.90 114.33 20.15Q114.86 19.40 114.86 17.96L114.86 17.96L114.86 17.51Q114.86 16.09 114.32 15.34Q113.79 14.58 112.80 14.58L112.80 14.58Q111.84 14.58 111.30 15.33Q110.76 16.09 110.74 17.46L110.74 17.46ZM122.28 22L120.81 22L120.81 13.47L122.73 13.47L125.19 20.01L127.64 13.47L129.56 13.47L129.56 22L128.08 22L128.08 19.19L128.23 15.43L125.71 22L124.65 22L122.14 15.43L122.28 19.19L122.28 22ZM135.78 22L134.30 22L134.30 13.47L136.22 13.47L138.68 20.01L141.14 13.47L143.05 13.47L143.05 22L141.58 22L141.58 19.19L141.72 15.43L139.20 22L138.14 22L135.63 15.43L135.78 19.19L135.78 22ZM147.52 18.00L147.52 18.00L147.52 17.52Q147.52 16.28 147.97 15.32Q148.41 14.37 149.21 13.86Q150.02 13.35 151.06 13.35Q152.11 13.35 152.91 13.85Q153.72 14.35 154.16 15.29Q154.60 16.23 154.60 17.48L154.60 17.48L154.60 17.96Q154.60 19.21 154.17 20.16Q153.73 21.10 152.93 21.61Q152.12 22.12 151.07 22.12L151.07 22.12Q150.04 22.12 149.23 21.61Q148.41 21.10 147.97 20.17Q147.53 19.23 147.52 18.00ZM149.01 17.46L149.01 17.96Q149.01 19.36 149.55 20.13Q150.10 20.90 151.07 20.90L151.07 20.90Q152.06 20.90 152.59 20.15Q153.12 19.40 153.12 17.96L153.12 17.96L153.12 17.51Q153.12 16.09 152.58 15.34Q152.05 14.58 151.06 14.58L151.06 14.58Q150.10 14.58 149.56 15.33Q149.02 16.09 149.01 17.46L149.01 17.46ZM160.55 22L159.07 22L159.07 13.47L160.55 13.47L164.36 19.54L164.36 13.47L165.83 13.47L165.83 22L164.35 22L160.55 15.95L160.55 22ZM170.14 19.42L170.14 19.42L171.62 19.42Q171.62 20.15 172.10 20.55Q172.58 20.95 173.48 20.95L173.48 20.95Q174.25 20.95 174.64 20.63Q175.03 20.32 175.03 19.80L175.03 19.80Q175.03 19.24 174.64 18.94Q174.24 18.63 173.21 18.32Q172.18 18.01 171.57 17.63L171.57 17.63Q170.40 16.90 170.40 15.72L170.40 15.72Q170.40 14.69 171.25 14.02Q172.09 13.35 173.43 13.35L173.43 13.35Q174.32 13.35 175.02 13.68Q175.71 14.01 176.11 14.61Q176.51 15.22 176.51 15.96L176.51 15.96L175.03 15.96Q175.03 15.29 174.61 14.91Q174.20 14.54 173.42 14.54L173.42 14.54Q172.69 14.54 172.29 14.85Q171.89 15.16 171.89 15.71L171.89 15.71Q171.89 16.18 172.32 16.50Q172.75 16.81 173.75 17.10Q174.75 17.40 175.35 17.78Q175.95 18.16 176.23 18.65Q176.52 19.13 176.52 19.79L176.52 19.79Q176.52 20.86 175.70 21.49Q174.88 22.12 173.48 22.12L173.48 22.12Q172.56 22.12 171.78 21.77Q171.00 21.43 170.57 20.83Q170.14 20.22 170.14 19.42Z" fill="#FFFFFF"></path><path class="svg__text" d="M205.09 22L202.76 22L202.76 13.60L204.71 13.60L208.42 18.07L208.42 13.60L210.75 13.60L210.75 22L208.80 22L205.09 17.52L205.09 22ZM215.48 17.80L215.48 17.80Q215.48 16.54 216.08 15.54Q216.68 14.55 217.73 13.99Q218.78 13.43 220.10 13.43L220.10 13.43Q221.26 13.43 222.18 13.84Q223.10 14.25 223.72 15.02L223.72 15.02L222.21 16.39Q221.39 15.40 220.22 15.40L220.22 15.40Q219.54 15.40 219.01 15.70Q218.47 16 218.18 16.54Q217.88 17.09 217.88 17.80L217.88 17.80Q217.88 18.51 218.18 19.05Q218.47 19.60 219.01 19.90Q219.54 20.20 220.22 20.20L220.22 20.20Q221.39 20.20 222.21 19.22L222.21 19.22L223.72 20.58Q223.11 21.35 222.18 21.76Q221.26 22.17 220.10 22.17L220.10 22.17Q218.78 22.17 217.73 21.61Q216.68 21.05 216.08 20.05Q215.48 19.06 215.48 17.80ZM231.49 19.46L227.99 19.46L227.99 17.71L231.49 17.71L231.49 19.46ZM238.72 22L236.39 22L236.39 13.60L238.35 13.60L242.06 18.07L242.06 13.60L244.38 13.60L244.38 22L242.43 22L238.72 17.52L238.72 22ZM253.52 22L249.55 22L249.55 13.60L253.52 13.60Q254.90 13.60 255.97 14.12Q257.03 14.63 257.62 15.58Q258.21 16.53 258.21 17.80L258.21 17.80Q258.21 19.07 257.62 20.02Q257.03 20.97 255.97 21.48Q254.90 22 253.52 22L253.52 22ZM251.92 15.50L251.92 20.10L253.42 20.10Q254.50 20.10 255.16 19.49Q255.81 18.88 255.81 17.80L255.81 17.80Q255.81 16.72 255.16 16.11Q254.50 15.50 253.42 15.50L253.42 15.50L251.92 15.50Z" fill="#FFFFFF" x="201.57000000000002"></path></svg></a>`;
-        case 'by-nc-sa':
-            modifierText = 'Attribution-NonCommercial-ShareAlike';
-            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-nc-sa.svg)](${licenseURL})`;
-        case 'by-sa':
-            modifierText = 'Attribution-ShareAlike';
-            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-sa.svg)](${licenseURL})`;
-    }
-    return `---\n\n${iconBadge}\n\nThis work is licensed under a [${modifierText} ${versionText} License](${licenseURL}).\r\n`;
-}
-run();
-
-
-/***/ }),
-
 /***/ 2877:
 /***/ ((module) => {
 
@@ -8784,12 +8929,307 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(6144);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+var exports = __webpack_exports__;
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.formatOutput = exports.formatContents = exports.formatCopyright = exports.parseContents = exports.parseCopyright = exports.parseUC = exports.parseTime = exports.parseUnitName = void 0;
+const core_1 = __nccwpck_require__(2186);
+const github_1 = __nccwpck_require__(5438);
+async function run() {
+    // Get client and context
+    const client = (0, github_1.getOctokit)((0, core_1.getInput)('GITHUB_TOKEN', { required: true }));
+    const levelMacro = (0, core_1.getInput)('LEVEL_MACRO', { required: true });
+    // Repository name should match the name of the unit
+    let UNIT_CODE = github_1.context.payload.repository.name;
+    // Get the contents of the LaTeX source code
+    let lectureNotesContents = await fetchFileContents(client, `${UNIT_CODE} Lecture Notes.tex`);
+    let examNotesContents = await fetchFileContents(client, `${UNIT_CODE} Exam Notes.tex`);
+    if (lectureNotesContents == null && examNotesContents == null) {
+        return (0, core_1.setFailed)('No LaTeX source files were found.');
+    }
+    // Get the contents of the CODEOWNERS file
+    let CODEOWNERSContents = await fetchFileContents(client, "CODEOWNERS");
+    if (CODEOWNERSContents == null) {
+        return (0, core_1.setFailed)('No CODEOWNERS file was provided.');
+    }
+    // Prepare the contents of the README file (output)
+    let WHICH_NOTES = "";
+    let DOWNLOADS = "";
+    let CONTRIBUTORS = parseCODEOWNERS(CODEOWNERSContents);
+    let UNIT_NAME = "";
+    let UNIT_TIME = "";
+    let UNIT_COORDINATOR = "";
+    let COPYRIGHT = "";
+    let COPYRIGHT_TYPE = [];
+    let COPYRIGHT_MODIFIER = "";
+    let COPYRIGHT_VERSION = "";
+    let CONTENTS_LIST = [];
+    let CONTENTS = "";
+    if (lectureNotesContents != null && examNotesContents != null) {
+        WHICH_NOTES = "**lecture notes** and **exam notes**";
+        DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)\n\nExam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
+    }
+    else if (lectureNotesContents != null) {
+        WHICH_NOTES = "**lecture notes**";
+        DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)`;
+    }
+    else if (examNotesContents != null) {
+        WHICH_NOTES = "**exam notes**";
+        DOWNLOADS = `Exam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${github_1.context.payload.repository.owner.name}/${github_1.context.payload.repository.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
+    }
+    if (lectureNotesContents != null) {
+        UNIT_NAME = parseUnitName(lectureNotesContents);
+        UNIT_TIME = parseTime(lectureNotesContents);
+        UNIT_COORDINATOR = parseUC(lectureNotesContents);
+        COPYRIGHT_TYPE = parseCopyright(lectureNotesContents);
+        CONTENTS_LIST = parseContents(lectureNotesContents, levelMacro);
+    }
+    else if (examNotesContents != null) {
+        UNIT_NAME = parseUnitName(examNotesContents);
+        UNIT_TIME = parseTime(examNotesContents);
+        UNIT_COORDINATOR = parseUC(examNotesContents);
+        COPYRIGHT_TYPE = parseCopyright(examNotesContents);
+        CONTENTS_LIST = parseContents(examNotesContents, levelMacro);
+    }
+    COPYRIGHT_MODIFIER = COPYRIGHT_TYPE[0];
+    COPYRIGHT_VERSION = COPYRIGHT_TYPE[1];
+    COPYRIGHT = formatCopyright(COPYRIGHT_MODIFIER, COPYRIGHT_VERSION);
+    CONTENTS = formatContents(CONTENTS_LIST);
+    let file_contents = formatOutput(UNIT_CODE, UNIT_NAME, UNIT_COORDINATOR, UNIT_TIME, DOWNLOADS, CONTRIBUTORS, WHICH_NOTES, CONTENTS, COPYRIGHT);
+    pushFile(client, file_contents);
+}
+async function fetchFileContents(client, filename) {
+    let output = null;
+    await client
+        .request('GET /repos/{owner}/{repo}/contents/{path}', {
+        owner: github_1.context.payload.repository.owner.name,
+        repo: github_1.context.payload.repository.name,
+        path: filename,
+        ref: github_1.context.sha
+    })
+        .then((onfulfilled) => {
+        if (onfulfilled.status == 200) {
+            let buffer = Buffer.from(onfulfilled.data.content, onfulfilled.data.encoding);
+            output = buffer.toString();
+        }
+    })
+        .catch((onrejected) => {
+        (0, core_1.warning)(`${filename} was not found.`);
+    });
+    return output;
+}
+function parseCODEOWNERS(s) {
+    let output = '';
+    const lines = s.split(/\r?\n/);
+    let usernames = [];
+    lines.forEach((v, i) => {
+        v = v.trim();
+        // Skip if comment
+        if (v.startsWith('%')) {
+            return;
+        }
+        let ignoreComments = v.split('#')[0];
+        let temp_usernames = ignoreComments.match(/\@([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})/gi);
+        if (temp_usernames == null)
+            return;
+        temp_usernames.forEach((u) => {
+            usernames.push(u.slice(1));
+        });
+    });
+    const usernamesSet = new Set(usernames);
+    let usernamesArray = [...usernamesSet];
+    usernamesArray = usernamesArray.slice(1);
+    if (usernamesArray.length > 1) {
+        let usernamesText = '';
+        usernamesArray.forEach((u, i) => {
+            if (i == usernamesArray.length - 1) {
+                usernamesText += `and [${u}](https://github.com/${u})`;
+            }
+            else {
+                if (usernamesArray.length == 2) {
+                    usernamesText += `[${u}](https://github.com/${u}) `;
+                }
+                else {
+                    usernamesText += `[${u}](https://github.com/${u}), `;
+                }
+            }
+        });
+        output = `Thanks to ${usernamesText} for the collaboration.\n\n`;
+    }
+    else if (usernamesArray.length == 1) {
+        output = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
+    }
+    return output;
+}
+function parseUnitName(s) {
+    let regex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *\\newcommand{\\unitName}{([\w .,]*)}/gm;
+    let output = "";
+    let match = regex.exec(s);
+    if (match != null) {
+        output = match[1];
+    }
+    return output;
+}
+exports.parseUnitName = parseUnitName;
+function parseTime(s) {
+    let regex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *\\newcommand{\\unitTime}{([\w .,]*)}/gm;
+    let output = "";
+    let match = regex.exec(s);
+    if (match != null) {
+        output = match[1];
+    }
+    return output;
+}
+exports.parseTime = parseTime;
+function parseUC(s) {
+    let regex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *\\newcommand{\\unitCoordinator}{([\w .,]*)}/gm;
+    let output = "";
+    let match = regex.exec(s);
+    if (match != null) {
+        output = match[1];
+    }
+    return output;
+}
+exports.parseUC = parseUC;
+function parseCopyright(s) {
+    let modifierRegex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *modifier={([a-zA-Z\-]*)}/gm;
+    let versionRegex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *version={(\d\.0)}/gm;
+    let output = [];
+    let modifierMatch = modifierRegex.exec(s);
+    if (modifierMatch != null) {
+        output.push(modifierMatch[1]);
+    }
+    let versionMatch = versionRegex.exec(s);
+    if (versionMatch != null) {
+        output.push(versionMatch[1]);
+    }
+    return output;
+}
+exports.parseCopyright = parseCopyright;
+function parseContents(s, levelMacro) {
+    let regex = new RegExp(`/(?!(?<=(?<!\\)(?:\\{2})*)%) *\\${levelMacro}{(.*?)}/gm`);
+    let output = [];
+    let match = regex.exec(s);
+    while (match != null) {
+        output.push(match[1]);
+        match = regex.exec(s);
+    }
+    return output;
+}
+exports.parseContents = parseContents;
+function formatCopyright(copyrightModifier, copyrightVersion) {
+    copyrightModifier = copyrightModifier.toLowerCase();
+    let modifierText = '';
+    let versionText = '';
+    let licenseURL = `http://creativecommons.org/licenses/${copyrightModifier}/${copyrightVersion}/`;
+    let iconBadge = "";
+    switch (copyrightVersion) {
+        case '1.0':
+            versionText = '1.0 Generic';
+        case '2.0':
+            versionText = '2.0 Generic';
+        case '3.0':
+            versionText = '3.0 Unported';
+        case '4.0':
+            versionText = '4.0 International';
+    }
+    switch (copyrightModifier) {
+        case 'by':
+            modifierText = 'Attribution';
+            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-by.svg)](${licenseURL})`;
+        case 'by-nd':
+            modifierText = 'Attribution-NoDerivatives';
+            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-by-nd.svg)](${licenseURL})`;
+        case 'by-nc':
+            modifierText = 'Attribution-NonCommercial';
+            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-nc.svg)](${licenseURL})`;
+        case 'by-nc-nd':
+            modifierText = 'Attribution-NonCommercial-NoDerivatives';
+            iconBadge = `<a href="https://forthebadge.com"><svg  xmlns="http://www.w3.org/2000/svg" width="270.02" height="35" viewBox="0 0 270.02 35"><rect class="svg__rect" x="0" y="0" width="190.57000000000002" height="35" fill="#B0AEAF"></rect><rect class="svg__rect" x="188.57000000000002" y="0" width="81.44999999999999" height="35" fill="#1C1C1D"></rect><path class="svg__text" d="M13.95 18.19L13.95 18.19L13.95 17.39Q13.95 16.19 14.38 15.27Q14.80 14.35 15.60 13.85Q16.40 13.35 17.45 13.35L17.45 13.35Q18.86 13.35 19.73 14.12Q20.59 14.89 20.73 16.29L20.73 16.29L19.25 16.29Q19.14 15.37 18.71 14.96Q18.28 14.55 17.45 14.55L17.45 14.55Q16.48 14.55 15.97 15.26Q15.45 15.96 15.44 17.33L15.44 17.33L15.44 18.09Q15.44 19.47 15.93 20.20Q16.43 20.92 17.38 20.92L17.38 20.92Q18.25 20.92 18.69 20.53Q19.13 20.14 19.25 19.22L19.25 19.22L20.73 19.22Q20.60 20.59 19.72 21.35Q18.84 22.12 17.38 22.12L17.38 22.12Q16.36 22.12 15.59 21.63Q14.81 21.15 14.39 20.26Q13.97 19.37 13.95 18.19ZM26.52 22L25.04 22L25.04 13.47L28.04 13.47Q29.52 13.47 30.32 14.13Q31.12 14.79 31.12 16.05L31.12 16.05Q31.12 16.90 30.71 17.48Q30.30 18.06 29.56 18.37L29.56 18.37L31.47 21.92L31.47 22L29.89 22L28.17 18.71L26.52 18.71L26.52 22ZM26.52 14.66L26.52 17.52L28.05 17.52Q28.80 17.52 29.22 17.15Q29.64 16.77 29.64 16.11L29.64 16.11Q29.64 15.43 29.25 15.05Q28.86 14.68 28.09 14.66L28.09 14.66L26.52 14.66ZM41.09 22L35.52 22L35.52 13.47L41.05 13.47L41.05 14.66L37.00 14.66L37.00 17.02L40.50 17.02L40.50 18.19L37.00 18.19L37.00 20.82L41.09 20.82L41.09 22ZM46.07 22L44.53 22L47.75 13.47L49.08 13.47L52.31 22L50.76 22L50.06 20.01L46.76 20.01L46.07 22ZM48.41 15.28L47.18 18.82L49.65 18.82L48.41 15.28ZM57.95 14.66L55.31 14.66L55.31 13.47L62.08 13.47L62.08 14.66L59.42 14.66L59.42 22L57.95 22L57.95 14.66ZM67.40 22L65.92 22L65.92 13.47L67.40 13.47L67.40 22ZM74.50 22L71.45 13.47L73.07 13.47L75.21 20.14L77.38 13.47L79.01 13.47L75.94 22L74.50 22ZM88.54 22L82.96 22L82.96 13.47L88.50 13.47L88.50 14.66L84.44 14.66L84.44 17.02L87.95 17.02L87.95 18.19L84.44 18.19L84.44 20.82L88.54 20.82L88.54 22ZM98.44 18.19L98.44 18.19L98.44 17.39Q98.44 16.19 98.87 15.27Q99.30 14.35 100.10 13.85Q100.89 13.35 101.94 13.35L101.94 13.35Q103.36 13.35 104.22 14.12Q105.08 14.89 105.22 16.29L105.22 16.29L103.74 16.29Q103.64 15.37 103.21 14.96Q102.78 14.55 101.94 14.55L101.94 14.55Q100.98 14.55 100.46 15.26Q99.94 15.96 99.93 17.33L99.93 17.33L99.93 18.09Q99.93 19.47 100.42 20.20Q100.92 20.92 101.87 20.92L101.87 20.92Q102.75 20.92 103.19 20.53Q103.63 20.14 103.74 19.22L103.74 19.22L105.22 19.22Q105.09 20.59 104.21 21.35Q103.33 22.12 101.87 22.12L101.87 22.12Q100.85 22.12 100.08 21.63Q99.30 21.15 98.88 20.26Q98.46 19.37 98.44 18.19ZM109.26 18.00L109.26 18.00L109.26 17.52Q109.26 16.28 109.70 15.32Q110.15 14.37 110.95 13.86Q111.76 13.35 112.80 13.35Q113.84 13.35 114.65 13.85Q115.46 14.35 115.89 15.29Q116.33 16.23 116.34 17.48L116.34 17.48L116.34 17.96Q116.34 19.21 115.91 20.16Q115.47 21.10 114.67 21.61Q113.86 22.12 112.81 22.12L112.81 22.12Q111.78 22.12 110.96 21.61Q110.15 21.10 109.71 20.17Q109.27 19.23 109.26 18.00ZM110.74 17.46L110.74 17.96Q110.74 19.36 111.29 20.13Q111.84 20.90 112.81 20.90L112.81 20.90Q113.80 20.90 114.33 20.15Q114.86 19.40 114.86 17.96L114.86 17.96L114.86 17.51Q114.86 16.09 114.32 15.34Q113.79 14.58 112.80 14.58L112.80 14.58Q111.84 14.58 111.30 15.33Q110.76 16.09 110.74 17.46L110.74 17.46ZM122.28 22L120.81 22L120.81 13.47L122.73 13.47L125.19 20.01L127.64 13.47L129.56 13.47L129.56 22L128.08 22L128.08 19.19L128.23 15.43L125.71 22L124.65 22L122.14 15.43L122.28 19.19L122.28 22ZM135.78 22L134.30 22L134.30 13.47L136.22 13.47L138.68 20.01L141.14 13.47L143.05 13.47L143.05 22L141.58 22L141.58 19.19L141.72 15.43L139.20 22L138.14 22L135.63 15.43L135.78 19.19L135.78 22ZM147.52 18.00L147.52 18.00L147.52 17.52Q147.52 16.28 147.97 15.32Q148.41 14.37 149.21 13.86Q150.02 13.35 151.06 13.35Q152.11 13.35 152.91 13.85Q153.72 14.35 154.16 15.29Q154.60 16.23 154.60 17.48L154.60 17.48L154.60 17.96Q154.60 19.21 154.17 20.16Q153.73 21.10 152.93 21.61Q152.12 22.12 151.07 22.12L151.07 22.12Q150.04 22.12 149.23 21.61Q148.41 21.10 147.97 20.17Q147.53 19.23 147.52 18.00ZM149.01 17.46L149.01 17.96Q149.01 19.36 149.55 20.13Q150.10 20.90 151.07 20.90L151.07 20.90Q152.06 20.90 152.59 20.15Q153.12 19.40 153.12 17.96L153.12 17.96L153.12 17.51Q153.12 16.09 152.58 15.34Q152.05 14.58 151.06 14.58L151.06 14.58Q150.10 14.58 149.56 15.33Q149.02 16.09 149.01 17.46L149.01 17.46ZM160.55 22L159.07 22L159.07 13.47L160.55 13.47L164.36 19.54L164.36 13.47L165.83 13.47L165.83 22L164.35 22L160.55 15.95L160.55 22ZM170.14 19.42L170.14 19.42L171.62 19.42Q171.62 20.15 172.10 20.55Q172.58 20.95 173.48 20.95L173.48 20.95Q174.25 20.95 174.64 20.63Q175.03 20.32 175.03 19.80L175.03 19.80Q175.03 19.24 174.64 18.94Q174.24 18.63 173.21 18.32Q172.18 18.01 171.57 17.63L171.57 17.63Q170.40 16.90 170.40 15.72L170.40 15.72Q170.40 14.69 171.25 14.02Q172.09 13.35 173.43 13.35L173.43 13.35Q174.32 13.35 175.02 13.68Q175.71 14.01 176.11 14.61Q176.51 15.22 176.51 15.96L176.51 15.96L175.03 15.96Q175.03 15.29 174.61 14.91Q174.20 14.54 173.42 14.54L173.42 14.54Q172.69 14.54 172.29 14.85Q171.89 15.16 171.89 15.71L171.89 15.71Q171.89 16.18 172.32 16.50Q172.75 16.81 173.75 17.10Q174.75 17.40 175.35 17.78Q175.95 18.16 176.23 18.65Q176.52 19.13 176.52 19.79L176.52 19.79Q176.52 20.86 175.70 21.49Q174.88 22.12 173.48 22.12L173.48 22.12Q172.56 22.12 171.78 21.77Q171.00 21.43 170.57 20.83Q170.14 20.22 170.14 19.42Z" fill="#FFFFFF"></path><path class="svg__text" d="M205.09 22L202.76 22L202.76 13.60L204.71 13.60L208.42 18.07L208.42 13.60L210.75 13.60L210.75 22L208.80 22L205.09 17.52L205.09 22ZM215.48 17.80L215.48 17.80Q215.48 16.54 216.08 15.54Q216.68 14.55 217.73 13.99Q218.78 13.43 220.10 13.43L220.10 13.43Q221.26 13.43 222.18 13.84Q223.10 14.25 223.72 15.02L223.72 15.02L222.21 16.39Q221.39 15.40 220.22 15.40L220.22 15.40Q219.54 15.40 219.01 15.70Q218.47 16 218.18 16.54Q217.88 17.09 217.88 17.80L217.88 17.80Q217.88 18.51 218.18 19.05Q218.47 19.60 219.01 19.90Q219.54 20.20 220.22 20.20L220.22 20.20Q221.39 20.20 222.21 19.22L222.21 19.22L223.72 20.58Q223.11 21.35 222.18 21.76Q221.26 22.17 220.10 22.17L220.10 22.17Q218.78 22.17 217.73 21.61Q216.68 21.05 216.08 20.05Q215.48 19.06 215.48 17.80ZM231.49 19.46L227.99 19.46L227.99 17.71L231.49 17.71L231.49 19.46ZM238.72 22L236.39 22L236.39 13.60L238.35 13.60L242.06 18.07L242.06 13.60L244.38 13.60L244.38 22L242.43 22L238.72 17.52L238.72 22ZM253.52 22L249.55 22L249.55 13.60L253.52 13.60Q254.90 13.60 255.97 14.12Q257.03 14.63 257.62 15.58Q258.21 16.53 258.21 17.80L258.21 17.80Q258.21 19.07 257.62 20.02Q257.03 20.97 255.97 21.48Q254.90 22 253.52 22L253.52 22ZM251.92 15.50L251.92 20.10L253.42 20.10Q254.50 20.10 255.16 19.49Q255.81 18.88 255.81 17.80L255.81 17.80Q255.81 16.72 255.16 16.11Q254.50 15.50 253.42 15.50L253.42 15.50L251.92 15.50Z" fill="#FFFFFF" x="201.57000000000002"></path></svg></a>`;
+        case 'by-nc-sa':
+            modifierText = 'Attribution-NonCommercial-ShareAlike';
+            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-nc-sa.svg)](${licenseURL})`;
+        case 'by-sa':
+            modifierText = 'Attribution-ShareAlike';
+            iconBadge = `[![license](https://forthebadge.com/images/badges/cc-sa.svg)](${licenseURL})`;
+    }
+    return `---\n\n${iconBadge}\n\nThis work is licensed under a [${modifierText} ${versionText} License](${licenseURL}).\r\n`;
+}
+exports.formatCopyright = formatCopyright;
+function formatContents(sections) {
+    let output = '*The contents of the lecture notes are described below.*\n\n---\n\n## Contents\n\n';
+    sections.forEach((s, i) => {
+        output += `${i + 1}. ${s}\n`;
+    });
+    output += '\n';
+    return output;
+}
+exports.formatContents = formatContents;
+function formatOutput(UNIT_CODE, UNIT_NAME, UNIT_COORDINATOR, UNIT_TIME, DOWNLOADS, CONTRIBUTORS, WHICH_NOTES, CONTENTS, COPYRIGHT) {
+    // Combine all variables
+    return `# ${UNIT_CODE} - ${UNIT_NAME}
+
+## ${UNIT_COORDINATOR}
+
+### ${UNIT_TIME}
+
+---
+
+## Downloads
+
+${DOWNLOADS}
+
+${CONTRIBUTORS}---
+
+This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
+
+${CONTENTS}${COPYRIGHT}`;
+}
+exports.formatOutput = formatOutput;
+async function pushFile(client, file_content) {
+    // Check if file exists
+    let requestOptions = {
+        owner: github_1.context.payload.repository.owner.name,
+        repo: github_1.context.payload.repository.name,
+        path: 'README.md',
+        message: 'README CI',
+        content: Buffer.from(file_content).toString('base64')
+    };
+    await client
+        .request('GET /repos/{owner}/{repo}/contents/{path}', {
+        owner: github_1.context.payload.repository.owner.name,
+        repo: github_1.context.payload.repository.name,
+        path: 'README.md',
+        ref: github_1.context.sha
+    })
+        .then((onfulfilled) => {
+        if (onfulfilled.status == 200) {
+            requestOptions['sha'] = onfulfilled.data['sha'];
+        }
+    })
+        .catch(() => { });
+    await client
+        .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
+        .then((onfulfilled) => {
+        if (onfulfilled.status == 200) {
+            return (0, core_1.info)('Successfully updated README.md.');
+        }
+        else if (onfulfilled.status == 201) {
+            return (0, core_1.info)('Successfully created README.md.');
+        }
+    })
+        .catch((onrejected) => {
+        return (0, core_1.setFailed)(onrejected);
+    });
+}
+run();
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;

@@ -1,190 +1,108 @@
 import { getInput, info, setFailed, warning } from '@actions/core';
 import { context, getOctokit } from '@actions/github';
 
-// Template placeholders for README
-let CONTRIBUTORS = '';
-
-let DOWNLOADS = '';
-
-let UNIT_CODE = '';
-let UNIT_NAME = '';
-let UNIT_COORDINATOR = '';
-
-let SEMESTER = '';
-let YEAR = '';
-
-let CONTENTS = '';
-let WHICH_NOTES = '';
-
-let COPYRIGHT = '';
+// Type information
+import { GitHub } from '@actions/github/lib/utils';
 
 async function run() {
     // Get client and context
     const client = getOctokit(getInput('GITHUB_TOKEN', { required: true }));
     const levelMacro = getInput('LEVEL_MACRO', { required: true });
 
-    let LectureNotesContents = '';
-    let ExamNotesContents = '';
-    let CodeOwnersContents = '';
+    // Repository name should match the name of the unit
+    let UNIT_CODE = context.payload.repository!.name;
 
-    let LN = true;
-    let EN = true;
-
-    // Look for lecture notes/exam notes files
-    await client
-        .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: context.payload.repository!.owner.name!,
-            repo: context.payload.repository!.name,
-            path: `${context.payload.repository!.name} Lecture Notes.tex`,
-            ref: context.sha
-        })
-        .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(
-                    (onfulfilled.data as any).content,
-                    (onfulfilled.data as any).encoding
-                );
-                LectureNotesContents = buffer.toString();
-            }
-        })
-        .catch((onrejected) => {
-            LN = false;
-            warning(
-                `No lecture notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${context.payload.repository!.name
-                } Lecture Notes.tex\``
-            );
-        });
-
-    await client
-        .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: context.payload.repository!.owner.name!,
-            repo: context.payload.repository!.name,
-            path: `${context.payload.repository!.name} Exam Notes.tex`,
-            ref: context.sha
-        })
-        .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(
-                    (onfulfilled.data as any).content,
-                    (onfulfilled.data as any).encoding
-                );
-                ExamNotesContents = buffer.toString();
-            }
-        })
-        .catch((onrejected) => {
-            EN = false;
-            warning(
-                `No exam notes file was found. If this was unintended, please ensure that the file name has the following format:\n\t\`${context.payload.repository!.name
-                } Exam Notes.tex\``
-            );
-        });
-
-    // Try to get CODEOWNERS file
-    await client
-        .request('GET /repos/{owner}/{repo}/contents/{path}', {
-            owner: context.payload.repository!.owner.name!,
-            repo: context.payload.repository!.name,
-            path: 'CODEOWNERS',
-            ref: context.sha
-        })
-        .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                let buffer = Buffer.from(
-                    (onfulfilled.data as any).content,
-                    (onfulfilled.data as any).encoding
-                );
-                CodeOwnersContents = buffer.toString();
-            }
-        }).catch((onrejected) => {
-            return setFailed(`No CODEOWNERS file was provided in repository.`);
-        });
-
-
-    if (!LN && !EN) {
-        return setFailed('No source files were found, ending workflow.');
+    // Get the contents of the LaTeX source code
+    let lectureNotesContents = await fetchFileContents(client, `${UNIT_CODE} Lecture Notes.tex`);
+    let examNotesContents = await fetchFileContents(client, `${UNIT_CODE} Exam Notes.tex`);
+    if (lectureNotesContents == null && examNotesContents == null) {
+        return setFailed('No LaTeX source files were found.');
     }
 
-    // Set variables for README template
-    // UNIT_CODE
-    UNIT_CODE = context.payload.repository!.name;
+    // Get the contents of the CODEOWNERS file
+    let CODEOWNERSContents = await fetchFileContents(client, "CODEOWNERS");
+    if (CODEOWNERSContents == null) {
+        return setFailed('No CODEOWNERS file was provided.');
+    }
 
-    // CONTRIBUTORS
-    CONTRIBUTORS = parseCODEOWNERS(CodeOwnersContents);
+    // Prepare the contents of the README file (output)
+    let WHICH_NOTES = "";
+    let DOWNLOADS = "";
 
-    // WHICH_NOTES and UNIT_NAME, UNIT_COORDINATOR, CONTENTS
-    if (LN && EN) {
-        WHICH_NOTES = '**lecture notes** and **exam notes**';
-        parseNotesContents(LectureNotesContents, levelMacro);
+    let CONTRIBUTORS = parseCODEOWNERS(CODEOWNERSContents);
+    let UNIT_NAME = "";
+    let UNIT_TIME = "";
+    let UNIT_COORDINATOR = "";
+
+    let COPYRIGHT = "";
+    let COPYRIGHT_TYPE: Array<string> = [];
+    let COPYRIGHT_MODIFIER = "";
+    let COPYRIGHT_VERSION = "";
+
+    let CONTENTS_LIST: Array<string> = [];
+    let CONTENTS = "";
+
+    if (lectureNotesContents != null && examNotesContents != null) {
+        WHICH_NOTES = "**lecture notes** and **exam notes**";
         DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)\n\nExam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
-    } else if (LN) {
-        WHICH_NOTES = '**lecture notes**';
-        parseNotesContents(LectureNotesContents, levelMacro);
+    } else if (lectureNotesContents != null) {
+        WHICH_NOTES = "**lecture notes**";
         DOWNLOADS = `Lecture notes download: [${UNIT_CODE} Lecture Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Lecture%20Notes.pdf)`;
-    } else if (EN) {
-        WHICH_NOTES = '**exam notes**';
-        parseNotesContents(ExamNotesContents, levelMacro);
+    } else if (examNotesContents != null) {
+        WHICH_NOTES = "**exam notes**";
         DOWNLOADS = `Exam notes download: [${UNIT_CODE} Exam Notes PDF](https://www.github.com/${context.payload.repository!.owner.name!}/${context.payload.repository!.name}/raw/main/${UNIT_CODE}%20Exam%20Notes.pdf)`;
     }
 
-    // Combine all variables
-    let output = `# ${UNIT_CODE} - ${UNIT_NAME}
+    if (lectureNotesContents != null) {
+        UNIT_NAME = parseUnitName(lectureNotesContents);
+        UNIT_TIME = parseTime(lectureNotesContents);
+        UNIT_COORDINATOR = parseUC(lectureNotesContents);
+        COPYRIGHT_TYPE = parseCopyright(lectureNotesContents);
+        CONTENTS_LIST = parseContents(lectureNotesContents, levelMacro);
+    } else if (examNotesContents != null) {
+        UNIT_NAME = parseUnitName(examNotesContents);
+        UNIT_TIME = parseTime(examNotesContents);
+        UNIT_COORDINATOR = parseUC(examNotesContents);
+        COPYRIGHT_TYPE = parseCopyright(examNotesContents);
+        CONTENTS_LIST = parseContents(examNotesContents, levelMacro);
+    }
+    COPYRIGHT_MODIFIER = COPYRIGHT_TYPE[0];
+    COPYRIGHT_VERSION = COPYRIGHT_TYPE[1];
+    COPYRIGHT = formatCopyright(COPYRIGHT_MODIFIER, COPYRIGHT_VERSION);
+    CONTENTS = formatContents(CONTENTS_LIST);
 
-## ${UNIT_COORDINATOR}
+    let file_contents = formatOutput(UNIT_CODE, UNIT_NAME, UNIT_COORDINATOR, UNIT_TIME, DOWNLOADS, CONTRIBUTORS, WHICH_NOTES, CONTENTS, COPYRIGHT);
 
-### Semester ${SEMESTER}, ${YEAR}
+    pushFile(client, file_contents);
+}
 
----
-
-## Downloads
-
-${DOWNLOADS}
-
-${CONTRIBUTORS}---
-
-This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
-
-${CONTENTS}${COPYRIGHT}`;
-
-    // Output to README.md
-
-    // Check if file exists
-    let requestOptions = {
-        owner: context.payload.repository!.owner.name!,
-        repo: context.payload.repository!.name,
-        path: 'README.md',
-        message: 'README CI',
-        content: Buffer.from(output).toString('base64')
-    };
+async function fetchFileContents(client: InstanceType<typeof GitHub>, filename: string): Promise<string | null> {
+    let output: string | null = null;
 
     await client
         .request('GET /repos/{owner}/{repo}/contents/{path}', {
             owner: context.payload.repository!.owner.name!,
             repo: context.payload.repository!.name,
-            path: 'README.md',
+            path: filename,
             ref: context.sha
         })
         .then((onfulfilled) => {
             if (onfulfilled.status == 200) {
-                requestOptions['sha'] = (onfulfilled.data as any).sha;
-            }
-        })
-        .catch(() => { });
-
-    await client
-        .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
-        .then((onfulfilled) => {
-            if (onfulfilled.status == 200) {
-                return info('Successfully updated README.md.');
-            } else if (onfulfilled.status == 201) {
-                return info('Successfully created README.md.');
+                let buffer = Buffer.from(
+                    (onfulfilled.data as any).content,
+                    (onfulfilled.data as any).encoding
+                );
+                output = buffer.toString();
             }
         })
         .catch((onrejected) => {
-            return setFailed(onrejected);
+            warning(`${filename} was not found.`);
         });
+
+    return output;
 }
 
-export function parseCODEOWNERS(s: string): string {
+function parseCODEOWNERS(s: string): string {
     let output = '';
     const lines = s.split(/\r?\n/);
     let usernames: Array<string> = [];
@@ -232,81 +150,79 @@ export function parseCODEOWNERS(s: string): string {
     } else if (usernamesArray.length == 1) {
         output = `Thanks to [${usernamesArray[0]}](https://github.com/${usernamesArray[0]}) for the collaboration.\n\n`;
     }
-    return output;
-}
-
-export function parseNotesContents(s: string, levelMacro: string) {
-    const lines = s.split(/\r?\n/);
-
-    let copyrightVersion = '';
-    let copyrightModifier = '';
-    let sections = new Array<string>();
-
-    lines.forEach((v) => {
-        v = v.trim();
-
-        // Skip if comment
-        if (v.startsWith('%')) {
-            return;
-        }
-
-        // Find other macros
-        if (v.startsWith('\\newcommand{\\unitName}')) {
-            UNIT_NAME = v.slice(23).split('}')[0];
-        } else if (v.startsWith('\\newcommand{\\unitTime}')) {
-            let time = v.slice(23).split('}')[0];
-            SEMESTER = time[9];
-            YEAR = time.slice(12);
-        } else if (v.startsWith('\\newcommand{\\unitCoordinator}')) {
-            UNIT_COORDINATOR = v.slice(30).split('}')[0];
-        } else if (v.startsWith('modifier={')) {
-            copyrightModifier = v.slice(10).split('}')[0];
-        } else if (v.startsWith('version={')) {
-            copyrightVersion = v.slice(9).split('}')[0];
-        } else if (v.startsWith(`\\${levelMacro}{`)) {
-            sections.push(v.slice(levelMacro.length + 2).split('}')[0]);
-        }
-    });
-
-    if (copyrightModifier != '' && copyrightVersion != '') {
-        COPYRIGHT = setCopyrightInformation(
-            copyrightModifier,
-            copyrightVersion
-        );
-    } else if (copyrightModifier != '' && copyrightVersion == '') {
-        COPYRIGHT = setCopyrightInformation(copyrightModifier, '4.0');
-    } else if (copyrightModifier == '' && copyrightVersion != '') {
-        warning('No copyright modifier was set.');
-        COPYRIGHT = '';
-    } else {
-        warning('No copyright license was set.');
-        COPYRIGHT = '';
-    }
-
-    if (sections.length > 0) {
-        CONTENTS = formatContents(sections);
-    } else {
-        CONTENTS = '';
-    }
-}
-
-function formatContents(sections: Array<string>): string {
-    let output =
-        '*The contents of the lecture notes are described below.*\n\n---\n\n## Contents\n\n';
-
-    sections.forEach((s, i) => {
-        output += `${i + 1}. ${s}\n`;
-    });
-
-    output += '\n';
 
     return output;
 }
 
-function setCopyrightInformation(
-    copyrightModifier: string,
-    copyrightVersion: string
-): string {
+export function parseUnitName(s: string): string {
+    let regex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *\\newcommand{\\unitName}{([\w .,]*)}/gm;
+    let output: string = "";
+
+    let match = regex.exec(s);
+    if (match != null) {
+        output = match[1];
+    }
+
+    return output;
+}
+
+export function parseTime(s: string): string {
+    let regex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *\\newcommand{\\unitTime}{([\w .,]*)}/gm;
+    let output: string = "";
+
+    let match = regex.exec(s);
+    if (match != null) {
+        output = match[1];
+    }
+
+    return output;
+}
+
+export function parseUC(s: string): string {
+    let regex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *\\newcommand{\\unitCoordinator}{([\w .,]*)}/gm;
+    let output: string = "";
+
+    let match = regex.exec(s);
+    if (match != null) {
+        output = match[1];
+    }
+
+    return output;
+}
+
+export function parseCopyright(s: string): Array<string> {
+    let modifierRegex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *modifier={([a-zA-Z\-]*)}/gm;
+    let versionRegex = /(?!(?<=(?<!\\)(?:\\{2})*)%) *version={(\d\.0)}/gm;
+
+    let output: Array<string> = [];
+
+    let modifierMatch = modifierRegex.exec(s);
+    if (modifierMatch != null) {
+        output.push(modifierMatch[1]);
+    }
+
+    let versionMatch = versionRegex.exec(s);
+    if (versionMatch != null) {
+        output.push(versionMatch[1]);
+    }
+
+    return output;
+}
+
+export function parseContents(s: string, levelMacro: string): Array<string> {
+    let regex = new RegExp(`/(?!(?<=(?<!\\)(?:\\{2})*)%) *\\${levelMacro}{(.*?)}/gm`);
+    let output: Array<string> = [];
+
+    let match = regex.exec(s);
+    while (match != null) {
+        output.push(match[1]);
+        match = regex.exec(s);
+    }
+
+    return output;
+}
+
+export function formatCopyright(copyrightModifier: string, copyrightVersion: string): string {
     copyrightModifier = copyrightModifier.toLowerCase();
 
     let modifierText = '';
@@ -348,6 +264,79 @@ function setCopyrightInformation(
     }
 
     return `---\n\n${iconBadge}\n\nThis work is licensed under a [${modifierText} ${versionText} License](${licenseURL}).\r\n`;
+}
+
+export function formatContents(sections: Array<string>): string {
+    let output =
+        '*The contents of the lecture notes are described below.*\n\n---\n\n## Contents\n\n';
+
+    sections.forEach((s, i) => {
+        output += `${i + 1}. ${s}\n`;
+    });
+
+    output += '\n';
+
+    return output;
+}
+
+export function formatOutput(UNIT_CODE: string, UNIT_NAME: string, UNIT_COORDINATOR: string,
+    UNIT_TIME: string, DOWNLOADS: string, CONTRIBUTORS: string, WHICH_NOTES: string, CONTENTS: string, COPYRIGHT: string): string {
+    // Combine all variables
+    return `# ${UNIT_CODE} - ${UNIT_NAME}
+
+## ${UNIT_COORDINATOR}
+
+### ${UNIT_TIME}
+
+---
+
+## Downloads
+
+${DOWNLOADS}
+
+${CONTRIBUTORS}---
+
+This repository provides ${WHICH_NOTES} for **${UNIT_CODE} - ${UNIT_NAME}**.
+
+${CONTENTS}${COPYRIGHT}`;
+}
+
+async function pushFile(client: InstanceType<typeof GitHub>, file_content: string) {
+    // Check if file exists
+    let requestOptions = {
+        owner: context.payload.repository!.owner.name!,
+        repo: context.payload.repository!.name,
+        path: 'README.md',
+        message: 'README CI',
+        content: Buffer.from(file_content).toString('base64')
+    };
+
+    await client
+        .request('GET /repos/{owner}/{repo}/contents/{path}', {
+            owner: context.payload.repository!.owner.name!,
+            repo: context.payload.repository!.name,
+            path: 'README.md',
+            ref: context.sha
+        })
+        .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                requestOptions['sha'] = onfulfilled.data['sha'];
+            }
+        })
+        .catch(() => { });
+
+    await client
+        .request('PUT /repos/{owner}/{repo}/contents/{path}', requestOptions)
+        .then((onfulfilled) => {
+            if (onfulfilled.status == 200) {
+                return info('Successfully updated README.md.');
+            } else if (onfulfilled.status == 201) {
+                return info('Successfully created README.md.');
+            }
+        })
+        .catch((onrejected) => {
+            return setFailed(onrejected);
+        });
 }
 
 run();
