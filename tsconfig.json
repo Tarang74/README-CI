@@ -1,16 +1,18 @@
 {
     "compilerOptions": {
-        "module": "CommonJS",
-        "target": "ES2015",
+        "module": "ESNext",
+        "target": "ES2022",
 
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "moduleResolution": "node",
 
+        "rootDir": "./src",
         "outDir": "dist",
 
         "strict": true,
         "noImplicitAny": false
     },
-    "include": ["src/*.ts"],
+    "include": ["./src/*.ts"],
+    "exclude": ["node_modules"]
 }

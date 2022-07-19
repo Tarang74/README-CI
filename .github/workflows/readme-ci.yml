@@ -1,8 +1,8 @@
-name: README Continuous Integration Workflow
+name: README Continuous Integration Test
 
 on:
   push:
-    branches: [testing]
+    branches: [main]
 
 jobs:
   README-CI:
@@ -15,6 +15,6 @@ jobs:
         uses: actions/setup-node@main
         
       - name: Tarang74/README-CI
-        uses: Tarang74/README-CI@testing
+        uses: Tarang74/README-CI@main
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
