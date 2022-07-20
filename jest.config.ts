@@ -1,5 +1,4 @@
 import type { Config } from '@jest/types';
-import { pathsToModuleNameMapper } from 'ts-jest';
 
 // Sync object
 const config: Config.InitialOptions = {
