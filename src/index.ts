@@ -215,7 +215,7 @@ export function parseCopyright(s: string): Array<string> {
 }
 
 export function parseContents(s: string, levelMacro: string): Array<string> {
-    const regex = new RegExp(`(?!(?<=(?<!\\)(?:\\{2})*)%) *\\${levelMacro}{(.*?)}`, "gm");
+    const regex = new RegExp(`(?!(?<=(?<!\\\\)(?:\\\\{2})*)%) *\\\\${levelMacro}{(.*?)}`, "gm");
     const output: Array<string> = [];
 
     let match = regex.exec(s);

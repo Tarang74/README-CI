@@ -9118,7 +9118,7 @@ function parseCopyright(s) {
 }
 exports.parseCopyright = parseCopyright;
 function parseContents(s, levelMacro) {
-    const regex = new RegExp(`(?!(?<=(?<!\\)(?:\\{2})*)%) *\\${levelMacro}{(.*?)}`, "gm");
+    const regex = new RegExp(`(?!(?<=(?<!\\\\)(?:\\\\{2})*)%) *\\\\${levelMacro}{(.*?)}`, "gm");
     const output = [];
     let match = regex.exec(s);
     while (match != null) {
