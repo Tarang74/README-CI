@@ -215,7 +215,7 @@ export function parseCopyright(s: string): Array<string> {
 }
 
 export function parseContents(s: string, levelMacro: string): Array<string> {
-    const regex = new RegExp(`/(?!(?<=(?<!\\)(?:\\{2})*)%) *\\${levelMacro}{(.*?)}/gm`);
+    const regex = new RegExp(`(?!(?<=(?<!\\)(?:\\{2})*)%) *\\${levelMacro}{(.*?)}`, "gm");
     const output: Array<string> = [];
 
     let match = regex.exec(s);
@@ -356,4 +356,7 @@ async function pushFile(client: InstanceType<typeof GitHub>, file_content: strin
         });
 }
 
-run();
+// If Jest is not active
+if (!process.env.JEST_WORKER_ID) {
+    run();
+}
